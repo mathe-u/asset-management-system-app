@@ -2,6 +2,7 @@ import 'package:assets_app/screens/main_asset_screen.dart';
 import 'package:assets_app/services/api_service.dart';
 import 'package:assets_app/services/storage_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -59,8 +60,9 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final Color? labelColor = Colors.grey[700];
+    DateTime? lastBackPressed = DateTime.now();
 
-    return Scaffold(
+    final loginWidget = Scaffold(
       backgroundColor: Colors.white,
       body: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -172,6 +174,33 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
+
+    final popScopeWidget = PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!mounted) return;
+
+        final now = DateTime.now();
+        final backPressed = lastBackPressed;
+
+        if (backPressed == null ||
+            now.difference(backPressed) > const Duration(seconds: 2)) {
+          lastBackPressed = now;
+          ScaffoldMessenger.of(context).removeCurrentSnackBar();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Pressione novamente para sair'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        } else {
+          SystemNavigator.pop();
+        }
+      },
+      child: loginWidget,
+    );
+
+    return popScopeWidget;
   }
 }
 
