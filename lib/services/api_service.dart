@@ -52,7 +52,7 @@ class ApiService {
     }
   }
 
-  static Future<List<dynamic>> getAssets() async {
+  static Future<List<Asset>> getAssets() async {
     try {
       final response = await http.get(
         Uri.parse('$_baseUrl/assets/'),
