@@ -4,10 +4,10 @@ import 'package:assets_app/models/asset.dart';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  static String _baseUrl = 'http://192.168.0.109:8000/api';
-  static String? _token;
-  static String? _username;
-  static String? _password;
+  static String _baseUrl = 'http://192.168.0.110:8000/api';
+  static String _token = '';
+  static String _username = '';
+  static String _password = '';
 
   static void setBaseUrl(String? url) {
     if (url != null && url.isNotEmpty) {
@@ -45,10 +45,25 @@ class ApiService {
         final String token = data['token'];
         return token;
       } else {
-        throw Exception('Failed to load assets: ${response.statusCode}');
+        throw Exception('Failed to load token: ${response.statusCode}');
       }
     } catch (e) {
       throw Exception('Error on login: $e');
+    }
+  }
+
+  static Future<void> logout() async {
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/auth/logout/'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        _token = '';
+      } else {}
+    } catch (e) {
+      throw Exception('Error on logout: $e');
     }
   }
 
@@ -68,6 +83,24 @@ class ApiService {
       }
     } catch (e) {
       throw Exception('Error fetching assets: $e');
+    }
+  }
+
+  static Future<void> deleteAsset(String code) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$_baseUrl/assets/$code/'),
+        headers: _headers,
+      );
+
+      if (response.statusCode != 204 && response.statusCode != 200) {
+        final errorBody = response.body.isNotEmpty
+            ? json.decode(utf8.decode(response.bodyBytes))
+            : {'message': 'Status code: ${response.statusCode}'};
+        throw Exception(errorBody['message'] ?? 'Failed to delete asset');
+      }
+    } catch (e) {
+      throw Exception('Error deleting asset: $e');
     }
   }
 
