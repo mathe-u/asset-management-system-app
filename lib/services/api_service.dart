@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
-import 'package:assets_app/models/asset.dart';
+import '../models/asset.dart';
 import 'package:http/http.dart' as http;
 
 class ApiService {

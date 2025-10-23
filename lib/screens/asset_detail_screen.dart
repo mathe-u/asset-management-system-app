@@ -1,6 +1,6 @@
-import 'package:assets_app/models/asset.dart';
-import 'package:assets_app/services/api_service.dart';
 import 'package:flutter/material.dart';
+import '../models/asset.dart';
+import '../services/api_service.dart';
 
 class AssetDetailScreen extends StatelessWidget {
   final Asset asset;
@@ -19,6 +19,7 @@ class AssetDetailScreen extends StatelessWidget {
             child: const Text('Excluir'),
           ),
         ],
+        backgroundColor: Colors.white,
       ),
     );
 

@@ -1,8 +1,8 @@
-import 'package:assets_app/screens/main_asset_screen.dart';
 import 'package:flutter/material.dart';
 import './screens/login_screen.dart';
 import './services/api_service.dart';
 import './services/storage_service.dart';
+import './screens/main_asset_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

@@ -1,11 +1,10 @@
-import 'package:assets_app/models/asset.dart';
-import 'package:assets_app/screens/login_screen.dart';
-import 'package:assets_app/services/api_service.dart';
-import 'package:assets_app/services/storage_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:assets_app/screens/asset_detail_screen.dart';
-// import 'package:pdf/widgets.dart';
+import '../models/asset.dart';
+import '../screens/login_screen.dart';
+import '../screens/asset_detail_screen.dart';
+import '../services/api_service.dart';
+import '../services/storage_service.dart';
 
 class MainAssetScreen extends StatefulWidget {
   const MainAssetScreen({super.key});
