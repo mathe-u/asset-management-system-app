@@ -1,3 +1,4 @@
+import 'package:assets_app/screens/main_asset_screen.dart';
 import 'package:flutter/material.dart';
 import './screens/login_screen.dart';
 import './services/api_service.dart';
@@ -26,7 +27,7 @@ class AssetApp extends StatelessWidget {
         primaryColor: Colors.deepOrange,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: const LoginScreen(),
+      home: startOnMain ? const MainAssetScreen() : const LoginScreen(),
       debugShowCheckedModeBanner: false,
     );
   }
