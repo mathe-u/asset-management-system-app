@@ -1,4 +1,11 @@
+import 'package:assets_app/models/asset.dart';
+import 'package:assets_app/screens/login_screen.dart';
+import 'package:assets_app/services/api_service.dart';
+import 'package:assets_app/services/storage_service.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:assets_app/screens/asset_detail_screen.dart';
+// import 'package:pdf/widgets.dart';
 
 class MainAssetScreen extends StatefulWidget {
   const MainAssetScreen({super.key});
@@ -8,14 +15,316 @@ class MainAssetScreen extends StatefulWidget {
 }
 
 class _MainAssetScreenState extends State<MainAssetScreen> {
-  int _currentIndex = 0;
+  // int _currentIndex = 0;
 
-  final List<Widget> _screens = const [];
+  // final List<Widget> _screens = const [];
+
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  List<Asset> _assets = [];
+  List<Asset> _filteredAssets = [];
+  bool _isLoading = true;
+  String? _error;
+  final TextEditingController _searchController = TextEditingController();
+
+  final Set<Asset> _selectedAssets = {};
+  bool get _isSelectionMode => _selectedAssets.isNotEmpty;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAssets();
+    _searchController.addListener(_filterAssets);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _filterAssets() {
+    final query = _searchController.text.toLowerCase();
+    setState(() {
+      if (query.isEmpty) {
+        _filteredAssets = _assets;
+      } else {
+        _filteredAssets = _assets.where((asset) {
+          return asset.name.toLowerCase().contains(query);
+        }).toList();
+      }
+    });
+  }
+
+  void _loadAssets() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final assets = await ApiService.getAssets();
+      if (mounted) {
+        setState(() {
+          _assets = assets;
+          _filteredAssets = assets;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _showAssetDetail(Asset asset) {
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute(
+            builder: (context) => AssetDetailScreen(asset: asset),
+          ),
+        )
+        .then((_) => _loadAssets());
+  }
+
+  void _toggleSelection(Asset asset) {
+    setState(() {
+      if (_selectedAssets.contains(asset)) {
+        _selectedAssets.remove(asset);
+      } else {
+        _selectedAssets.add(asset);
+      }
+    });
+  }
+
+  // void _clearSelection() {
+  //   setState(() {
+  //     _selectedAssets.clear();
+  //   });
+  // }
+
+  Future<void> _handleLogout(BuildContext context) async {
+    await StorageService.deleteToken();
+    await ApiService.logout();
+    if (context.mounted) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (route) => false,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final Scaffold topMainAssetScreen = Scaffold();
+    final Widget sideBar = Drawer(
+      backgroundColor: Colors.white,
+      child: Column(
+        children: [
+          Expanded(child: Container()),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: ElevatedButton.icon(
+              onPressed: () => _handleLogout(context),
+              icon: Icon(
+                Icons.logout,
+                color: const Color(0xFFDC2626),
+                size: 24,
+              ),
+              label: Text(
+                'Sair',
+                style: GoogleFonts.inter(
+                  color: const Color(0xFFDC2626),
+                  fontSize: 24,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFEE2E2),
+                foregroundColor: const Color(0xFFDC2626),
+                minimumSize: Size(double.infinity, 50),
+                elevation: 0,
+                surfaceTintColor: Colors.transparent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                shadowColor: Colors.transparent,
+                alignment: Alignment.centerLeft,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
 
-    return topMainAssetScreen;
+    return Scaffold(
+      key: _scaffoldKey,
+      appBar: AppBar(
+        backgroundColor: Colors.deepOrange,
+        title: Text(
+          'Assets',
+          style: GoogleFonts.inter(
+            color: Colors.white,
+            fontSize: 26,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: true,
+        leading: IconButton(
+          onPressed: () {
+            _scaffoldKey.currentState?.openDrawer();
+          },
+          icon: Icon(Icons.menu, color: Colors.white, size: 30),
+        ),
+      ),
+      drawer: sideBar,
+      backgroundColor: const Color(0xFFF8F9FA),
+      body: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16.0),
+            color: const Color(0xFFF8F9FA),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8.0),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Buscar...',
+                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                    borderSide: BorderSide.none,
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _error != null
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text('Erro: $_error'),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: _loadAssets,
+                          child: const Text('Tentar Novamente'),
+                        ),
+                      ],
+                    ),
+                  )
+                : _filteredAssets.isEmpty
+                ? const Center(child: Text('Nenhum asset encontrado'))
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: _filteredAssets.length,
+                    itemBuilder: (context, index) {
+                      final asset = _filteredAssets[index];
+                      final isSelected = _selectedAssets.contains(asset);
+
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        color: Colors.white,
+                        elevation: isSelected ? 4 : 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: ListTile(
+                          selected: isSelected,
+                          selectedTileColor: Colors.deepOrange.withValues(
+                            alpha: 0.2,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          leading: Container(
+                            width: 45,
+                            height: 45,
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? Colors.deepOrange
+                                  : const Color(0xFFF3F4F6),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Center(
+                              child: isSelected
+                                  ? const Icon(Icons.check)
+                                  : Text(
+                                      asset.name[0].toUpperCase(),
+                                      style: const TextStyle(
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 20,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                          title: Text(
+                            asset.name,
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 18,
+                              color: Colors.black,
+                            ),
+                          ),
+                          subtitle: Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Código: ${asset.code}',
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                                Text(
+                                  asset.location,
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                              ],
+                            ),
+                          ),
+                          trailing: _isSelectionMode
+                              ? null
+                              : const Icon(Icons.arrow_forward_ios, size: 16),
+                          onTap: () {
+                            if (_isSelectionMode) {
+                              _toggleSelection(asset);
+                            } else {
+                              _showAssetDetail(asset);
+                            }
+                          },
+                          onLongPress: () {
+                            _toggleSelection(asset);
+                          },
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
   }
 }
