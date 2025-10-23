@@ -21,10 +21,10 @@ class Asset {
     return Asset(
       name: json['name'],
       code: json['code'],
-      category: json['category'],
+      category: json['category'] ?? '',
       status: json['status'],
-      custodian: json['custodian'],
-      location: json['location'],
+      custodian: json['custodian'] ?? '',
+      location: json['location'] ?? '',
       barcode: json['barcode'],
     );
   }
