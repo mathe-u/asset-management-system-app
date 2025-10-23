@@ -38,8 +38,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
       String token = await ApiService.login();
 
-      // await StorageService.saveToken(token);
       if (token.isNotEmpty) {
+        ApiService.setToken(token);
         await StorageService.saveToken(token);
       }
 
