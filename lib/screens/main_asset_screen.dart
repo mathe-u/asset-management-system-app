@@ -352,77 +352,88 @@ class _MainAssetScreenState extends State<MainAssetScreen> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: ListTile(
-                          selected: isSelected,
-                          selectedTileColor: const Color.fromARGB(
-                            255,
-                            255,
-                            150,
-                            150,
-                          ).withValues(alpha: 0.2),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          leading: Container(
-                            width: 45,
-                            height: 45,
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? const Color(0xFFDC2626)
-                                  : const Color(0xFFF3F4F6),
-                              borderRadius: BorderRadius.circular(8),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(40),
+
+                          child: ListTile(
+                            splashColor: Colors.transparent,
+                            // hoverColor: Colors.transparent,
+                            selectedColor: Colors.grey.shade800,
+                            iconColor: Colors.black,
+                            selected: isSelected,
+                            selectedTileColor: const Color.fromARGB(
+                              255,
+                              255,
+                              150,
+                              150,
+                            ).withValues(alpha: 0.2),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
                             ),
-                            child: Center(
-                              child: isSelected
-                                  ? const Icon(Icons.check, color: Colors.white)
-                                  : Text(
-                                      asset.name[0].toUpperCase(),
-                                      style: const TextStyle(
-                                        color: Colors.black,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 20,
+                            leading: Container(
+                              width: 45,
+                              height: 45,
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? const Color(0xFFDC2626)
+                                    : const Color(0xFFF3F4F6),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Center(
+                                child: isSelected
+                                    ? const Icon(
+                                        Icons.check,
+                                        color: Colors.white,
+                                      )
+                                    : Text(
+                                        asset.name[0].toUpperCase(),
+                                        style: const TextStyle(
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 20,
+                                        ),
                                       ),
-                                    ),
+                              ),
                             ),
-                          ),
-                          title: Text(
-                            asset.name,
-                            style: GoogleFonts.inter(
-                              fontWeight: FontWeight.w500,
-                              fontSize: 18,
-                              color: Colors.black,
+                            title: Text(
+                              asset.name,
+                              style: GoogleFonts.inter(
+                                fontWeight: FontWeight.w500,
+                                fontSize: 18,
+                                color: Colors.black,
+                              ),
                             ),
-                          ),
-                          subtitle: Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Código: ${asset.code}',
-                                  style: const TextStyle(fontSize: 14),
-                                ),
-                                Text(
-                                  asset.location,
-                                  style: const TextStyle(fontSize: 14),
-                                ),
-                              ],
+                            subtitle: Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Código: ${asset.code}',
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                  Text(
+                                    asset.location,
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          trailing: _isSelectionMode
-                              ? null
-                              : const Icon(Icons.arrow_forward_ios, size: 16),
-                          onTap: () {
-                            if (_isSelectionMode) {
+                            trailing: _isSelectionMode
+                                ? null
+                                : const Icon(Icons.arrow_forward_ios, size: 16),
+                            onTap: () {
+                              if (_isSelectionMode) {
+                                _toggleSelection(asset);
+                              } else {
+                                _showAssetDetail(asset);
+                              }
+                            },
+                            onLongPress: () {
                               _toggleSelection(asset);
-                            } else {
-                              _showAssetDetail(asset);
-                            }
-                          },
-                          onLongPress: () {
-                            _toggleSelection(asset);
-                          },
+                            },
+                          ),
                         ),
                       );
                     },

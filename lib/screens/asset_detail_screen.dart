@@ -44,13 +44,13 @@ class AssetDetailScreen extends StatelessWidget {
 
   Widget _buildDetailRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             label,
-            style: GoogleFonts.inter(fontWeight: FontWeight.w500, fontSize: 20),
+            style: GoogleFonts.inter(fontWeight: FontWeight.w500, fontSize: 18),
           ),
           SizedBox(height: 2),
           Text(
@@ -58,7 +58,7 @@ class AssetDetailScreen extends StatelessWidget {
             style: GoogleFonts.inter(
               color: Colors.grey[600],
               fontWeight: FontWeight.w500,
-              fontSize: 20,
+              fontSize: 18,
             ),
           ),
         ],
@@ -68,9 +68,12 @@ class AssetDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final List<String> assetImages = ['images/asset.png', 'images/asset.png'];
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(asset.name),
+        title: Text('Detalhes do Ativo'),
+        centerTitle: true,
         actions: [
           IconButton(onPressed: () {}, icon: const Icon(Icons.edit)),
           IconButton(
@@ -80,40 +83,65 @@ class AssetDetailScreen extends StatelessWidget {
         ],
       ),
       backgroundColor: const Color(0xfff8f9fa),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Card(
-              color: Colors.white,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      asset.name,
-                      style: GoogleFonts.inter(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 34,
-                      ),
+            SizedBox(
+              height: 240,
+              width: double.infinity,
+              child: assetImages.length > 1
+                  ? PageView.builder(
+                      itemCount: assetImages.length,
+                      itemBuilder: (context, index) {
+                        return Image.asset(
+                          assetImages[index],
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                        );
+                      },
+                    )
+                  : Image.asset(
+                      assetImages.first,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
                     ),
-                    SizedBox(height: 8),
-                    Text(
-                      'Código: ${asset.code}',
-                      style: GoogleFonts.inter(
-                        color: Colors.grey[600],
-                        fontSize: 18,
-                        fontWeight: FontWeight.w400,
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Card(
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                elevation: 2,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        asset.name,
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 34,
+                        ),
                       ),
-                    ),
-
-                    _buildDetailRow('Status', asset.status),
-                    _buildDetailRow('Responsavel', asset.custodian),
-                    _buildDetailRow('Categoria', asset.category),
-                    _buildDetailRow('Local', asset.location),
-                  ],
+                      const SizedBox(height: 8),
+                      Text(
+                        'Código: ${asset.code}',
+                        style: GoogleFonts.inter(
+                          color: Colors.grey[600],
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                      _buildDetailRow('Status', asset.status),
+                      _buildDetailRow('Responsavel', asset.custodian),
+                      _buildDetailRow('Categoria', asset.category),
+                      _buildDetailRow('Local', asset.location),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -122,16 +150,33 @@ class AssetDetailScreen extends StatelessWidget {
       ),
     );
   }
-
-  // @override
-  // State<StatefulWidget> createState() {
-  //   return _AssetDetailState();
-  // }
 }
 
-// class _AssetDetailState extends State<AssetDetailScreen> {
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold();
-//   }
-// }
+
+// Padding(
+//         padding: const EdgeInsets.all(16.0),
+//         child: Column(
+//           crossAxisAlignment: CrossAxisAlignment.center,
+//           children: [
+//             Card(
+//               color: Colors.white,
+//               child: Padding(
+//                 padding: const EdgeInsets.all(16.0),
+//                 child: Column(
+//                   crossAxisAlignment: CrossAxisAlignment.start,
+//                   children: [
+                    
+//                     SizedBox(height: 8),
+                    
+
+//                     _buildDetailRow('Status', asset.status),
+//                     _buildDetailRow('Responsavel', asset.custodian),
+//                     _buildDetailRow('Categoria', asset.category),
+//                     _buildDetailRow('Local', asset.location),
+//                   ],
+//                 ),
+//               ),
+//             ),
+//           ],
+//         ),
+//       ),
