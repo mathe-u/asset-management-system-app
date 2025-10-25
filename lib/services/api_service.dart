@@ -1,13 +1,16 @@
 import 'dart:convert';
 import 'dart:typed_data';
-import '../models/asset.dart';
 import 'package:http/http.dart' as http;
+import '../models/asset.dart';
+import '../models/user.dart';
 
 class ApiService {
   static String _baseUrl = 'http://192.168.0.110:8000/api';
   static String _token = '';
   static String _username = '';
   static String _password = '';
+  static int _userId = 0;
+  // static String _userEmail = '';
 
   static void setBaseUrl(String? url) {
     if (url != null && url.isNotEmpty) {
@@ -19,12 +22,13 @@ class ApiService {
     _token = token;
   }
 
-  static void setUsername(String username) {
+  static void setCredentials(String username, String password) {
     _username = username;
+    _password = password;
   }
 
-  static void setPassword(String password) {
-    _password = password;
+  static void setUserId(int id) {
+    _userId = id;
   }
 
   static Map<String, String> get _headers => {
@@ -32,7 +36,7 @@ class ApiService {
     'Authorization': 'Token $_token',
   };
 
-  static Future<String> login() async {
+  static Future<Map<String, dynamic>> login() async {
     try {
       final response = await http.post(
         Uri.parse('$_baseUrl/auth/login/'),
@@ -42,10 +46,16 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final data = json.decode(utf8.decode(response.bodyBytes));
-        final String token = data['token'];
-        return token;
+        // final String token = data['token'];
+        // final int userId = data['user_id'];
+        // final String email = data['email'];
+        // _userId = userId;
+        // _userEmail = email;
+        return data;
+      } else if (response.statusCode == 400) {
+        throw Exception('Usuario ou senha incorretos');
       } else {
-        throw Exception('Failed to load token: ${response.statusCode}');
+        throw Exception('Failed to load data: ${response.statusCode}');
       }
     } catch (e) {
       throw Exception('Error on login: $e');
@@ -61,9 +71,34 @@ class ApiService {
 
       if (response.statusCode == 200) {
         _token = '';
+        _userId = 0;
+        // _userEmail = '';
       } else {}
     } catch (e) {
       throw Exception('Error on logout: $e');
+    }
+  }
+
+  static Future<User> getUserById(int? userId) async {
+    try {
+      if (_token == '') {
+        throw Exception('Token nao configurado');
+      }
+
+      final response = await http.get(
+        Uri.parse('$_baseUrl/users/${userId ?? _userId}/'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(utf8.decode(response.bodyBytes));
+
+        return User.fromJson(data);
+      } else {
+        throw Exception('Error fetching user: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching user: ${e.toString()}');
     }
   }
 

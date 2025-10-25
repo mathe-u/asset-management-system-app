@@ -5,6 +5,7 @@ import '../screens/login_screen.dart';
 import '../screens/asset_detail_screen.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
+import '../models/user.dart';
 
 class MainAssetScreen extends StatefulWidget {
   const MainAssetScreen({super.key});
@@ -21,6 +22,7 @@ class _MainAssetScreenState extends State<MainAssetScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   List<Asset> _assets = [];
   List<Asset> _filteredAssets = [];
+  User? _user;
   bool _isLoading = true;
   String? _error;
   final TextEditingController _searchController = TextEditingController();
@@ -32,6 +34,7 @@ class _MainAssetScreenState extends State<MainAssetScreen> {
   void initState() {
     super.initState();
     _loadAssets();
+    _loadUserInfo();
     _searchController.addListener(_filterAssets);
   }
 
@@ -54,18 +57,36 @@ class _MainAssetScreenState extends State<MainAssetScreen> {
     });
   }
 
+  void _loadUserInfo() async {
+    final int? userId = await StorageService.getUserId();
+    final User user = await ApiService.getUserById(userId);
+
+    print(user.id);
+    print(user.username);
+    print(user.email);
+
+    if (mounted) {
+      setState(() {
+        _user = user;
+      });
+    }
+  }
+
   void _loadAssets() async {
     setState(() {
       _isLoading = true;
       _error = null;
+      _isLoading = false;
     });
 
     try {
-      final assets = await ApiService.getAssets();
+      final List<Asset> assets = await ApiService.getAssets();
+
       if (mounted) {
         setState(() {
           _assets = assets;
           _filteredAssets = assets;
+
           _isLoading = false;
         });
       }
@@ -120,8 +141,60 @@ class _MainAssetScreenState extends State<MainAssetScreen> {
   Widget build(BuildContext context) {
     final Widget sideBar = Drawer(
       backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       child: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 45, 16, 25),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 24,
+                  backgroundColor: const Color(0xFFFEE2E2),
+                  child: Text(
+                    (_user?.username != null && _user!.username.isNotEmpty)
+                        ? _user!.username[0].toUpperCase()
+                        : '?',
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFFDC2626),
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _user?.username ?? 'Carregando...',
+                      style: GoogleFonts.inter(
+                        color: Colors.black,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      _user?.email ?? 'Carregando...',
+                      style: GoogleFonts.inter(
+                        color: Colors.grey[600],
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const Divider(
+            color: Colors.grey,
+            thickness: 0.4,
+            height: 1,
+            indent: 0,
+            endIndent: 0,
+          ),
           Expanded(child: Container()),
           Padding(
             padding: const EdgeInsets.all(16),
@@ -161,7 +234,7 @@ class _MainAssetScreenState extends State<MainAssetScreen> {
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
-        backgroundColor: Colors.deepOrange,
+        backgroundColor: const Color(0xFFDC2626),
         title: Text(
           'Assets',
           style: GoogleFonts.inter(

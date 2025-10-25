@@ -19,42 +19,77 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _obscurePassword = true;
 
-  void _login() async {
-    if (_usernameController.text.trim().isEmpty &&
-        _passwordController.text.trim().isEmpty) {
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  void _handleLogin() async {
+    final username = _usernameController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (username.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, insira as credencias')),
+        const SnackBar(content: Text('Por favor, preencha todos campos')),
       );
+      return;
     }
 
     setState(() => _isLoading = true);
 
     try {
-      final username = _usernameController.text.trim();
-      final password = _passwordController.text.trim();
+      ApiService.setCredentials(username, password);
 
-      ApiService.setUsername(username);
-      ApiService.setPassword(password);
+      // final token = await ApiService.login();
 
-      String token = await ApiService.login();
+      // ApiService.setToken(token);
+      // ApiService.setUserId(id);
+      // await StorageService.saveToken(token);
+      // await StorageService.saveUserId(id);
 
-      if (token.isNotEmpty) {
+      final Map<String, dynamic> authData = await ApiService.login();
+
+      if (authData.containsKey('token') && authData.containsKey('user_id')) {
+        final String token = authData['token'];
+        final int userId = authData['user_id'];
+
         ApiService.setToken(token);
         await StorageService.saveToken(token);
-      }
+        await StorageService.saveUserId(userId);
 
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const MainAssetScreen()),
-        );
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const MainAssetScreen()),
+          );
+        }
+      } else {
+        final String errorMessage =
+            authData['message'] ?? 'Credenciais inválidas';
+        if (mounted) {
+          _showErrorSnackBar(errorMessage);
+        }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Erro na autenticação: $e')));
+        _showErrorSnackBar('Erro inesperado. Tente novamente. $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
     }
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
   @override
@@ -142,7 +177,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                onPressed: _isLoading ? null : _login,
+                onPressed: _isLoading ? null : _handleLogin,
                 child: _isLoading
                     ? const CircularProgressIndicator(color: Colors.white)
                     : const Text(
