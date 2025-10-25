@@ -120,11 +120,11 @@ class _MainAssetScreenState extends State<MainAssetScreen> {
     });
   }
 
-  // void _clearSelection() {
-  //   setState(() {
-  //     _selectedAssets.clear();
-  //   });
-  // }
+  void _clearSelection() {
+    setState(() {
+      _selectedAssets.clear();
+    });
+  }
 
   Future<void> _handleLogout(BuildContext context) async {
     await StorageService.deleteToken();
@@ -133,6 +133,53 @@ class _MainAssetScreenState extends State<MainAssetScreen> {
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const LoginScreen()),
         (route) => false,
+      );
+    }
+  }
+
+  AppBar _buildAppBar() {
+    if (_isSelectionMode) {
+      return AppBar(
+        backgroundColor: Color(0xFFEA2831),
+        title: Text(
+          '${_selectedAssets.length} selecionado(s)',
+          style: GoogleFonts.inter(color: Colors.white),
+        ),
+        leading: IconButton(
+          onPressed: _clearSelection,
+          icon: const Icon(Icons.close, color: Colors.white),
+        ),
+        actions: [
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(Icons.print, color: Colors.white),
+            tooltip: 'Imprimir Etiquetas',
+          ),
+          IconButton(
+            onPressed: () {},
+            icon: Icon(Icons.delete, color: Colors.white),
+            tooltip: 'Deletar Ativos',
+          ),
+        ],
+      );
+    } else {
+      return AppBar(
+        backgroundColor: Color(0xFFEA2831),
+        title: Text(
+          'Assets',
+          style: GoogleFonts.inter(
+            color: Colors.white,
+            fontSize: 26,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: true,
+        leading: IconButton(
+          onPressed: () {
+            _scaffoldKey.currentState?.openDrawer();
+          },
+          icon: Icon(Icons.menu, color: Colors.white, size: 30),
+        ),
       );
     }
   }
@@ -233,24 +280,7 @@ class _MainAssetScreenState extends State<MainAssetScreen> {
 
     return Scaffold(
       key: _scaffoldKey,
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFDC2626),
-        title: Text(
-          'Assets',
-          style: GoogleFonts.inter(
-            color: Colors.white,
-            fontSize: 26,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        centerTitle: true,
-        leading: IconButton(
-          onPressed: () {
-            _scaffoldKey.currentState?.openDrawer();
-          },
-          icon: Icon(Icons.menu, color: Colors.white, size: 30),
-        ),
-      ),
+      appBar: _buildAppBar(),
       drawer: sideBar,
       backgroundColor: const Color(0xFFF8F9FA),
       body: Column(
@@ -324,9 +354,12 @@ class _MainAssetScreenState extends State<MainAssetScreen> {
                         ),
                         child: ListTile(
                           selected: isSelected,
-                          selectedTileColor: Colors.deepOrange.withValues(
-                            alpha: 0.2,
-                          ),
+                          selectedTileColor: const Color.fromARGB(
+                            255,
+                            255,
+                            150,
+                            150,
+                          ).withValues(alpha: 0.2),
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 8,
@@ -336,13 +369,13 @@ class _MainAssetScreenState extends State<MainAssetScreen> {
                             height: 45,
                             decoration: BoxDecoration(
                               color: isSelected
-                                  ? Colors.deepOrange
+                                  ? const Color(0xFFDC2626)
                                   : const Color(0xFFF3F4F6),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Center(
                               child: isSelected
-                                  ? const Icon(Icons.check)
+                                  ? const Icon(Icons.check, color: Colors.white)
                                   : Text(
                                       asset.name[0].toUpperCase(),
                                       style: const TextStyle(
@@ -400,3 +433,17 @@ class _MainAssetScreenState extends State<MainAssetScreen> {
     );
   }
 }
+
+// AppBar(
+//         backgroundColor: const Color(0xFFDC2626),
+        // title: Text(
+        //   'Assets',
+        //   style: GoogleFonts.inter(
+        //     color: Colors.white,
+        //     fontSize: 26,
+        //     fontWeight: FontWeight.bold,
+        //   ),
+        // ),
+//         centerTitle: true,
+        
+//       ),
