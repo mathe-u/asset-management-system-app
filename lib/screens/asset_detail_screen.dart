@@ -3,16 +3,28 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/asset.dart';
 import '../services/api_service.dart';
 
-class AssetDetailScreen extends StatelessWidget {
+class AssetDetailScreen extends StatefulWidget {
   final Asset asset;
   const AssetDetailScreen({super.key, required this.asset});
+
+  @override
+  State<StatefulWidget> createState() {
+    return _AsserDetailScreenState();
+  }
+}
+
+class _AsserDetailScreenState extends State<AssetDetailScreen> {
+  final PageController _pageController = PageController();
+  int _currentPage = 0;
 
   void _deletAsset(BuildContext context) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Confirmar Exclusão'),
-        content: Text('Deseja realmente excluir o asset "${asset.name}"?'),
+        content: Text(
+          'Deseja realmente excluir o asset "${widget.asset.name}"?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
@@ -26,7 +38,7 @@ class AssetDetailScreen extends StatelessWidget {
 
     if (confirm == true && context.mounted) {
       try {
-        await ApiService.deleteAsset(asset.code);
+        await ApiService.deleteAsset(widget.asset.code);
         if (context.mounted) {
           ScaffoldMessenger.of(
             context,
@@ -68,7 +80,12 @@ class AssetDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<String> assetImages = ['images/asset.png', 'images/asset.png'];
+    final Asset asset = widget.asset;
+    final List<String> assetImages = [
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuAExuLLxNWza7jmqEKG8j4dA4PNYD5BnQ3lwHZh3YaMZN1TGqR8SpfIyP61MpIVX3irpJAsFyFxdGWws_LoUSFOh2_BRo_9u3WbEaCbxHkHqSDU8fRc3YqUnnYqLEvI-bfP-Zgy9h2g3S5X_7Z1WXHKmHIU4SW10dAYdEQ_T1K6uYt-wWsbUTF6YkgJHO2PQ8SNRTVHSyuReTOcgpm_WpqyyGZpOpt4pnKSpTBiZ1YmmgyNghRK-5fmhnL9_zRg1oMAFPx6VNdoum0',
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuAExuLLxNWza7jmqEKG8j4dA4PNYD5BnQ3lwHZh3YaMZN1TGqR8SpfIyP61MpIVX3irpJAsFyFxdGWws_LoUSFOh2_BRo_9u3WbEaCbxHkHqSDU8fRc3YqUnnYqLEvI-bfP-Zgy9h2g3S5X_7Z1WXHKmHIU4SW10dAYdEQ_T1K6uYt-wWsbUTF6YkgJHO2PQ8SNRTVHSyuReTOcgpm_WpqyyGZpOpt4pnKSpTBiZ1YmmgyNghRK-5fmhnL9_zRg1oMAFPx6VNdoum0',
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuAExuLLxNWza7jmqEKG8j4dA4PNYD5BnQ3lwHZh3YaMZN1TGqR8SpfIyP61MpIVX3irpJAsFyFxdGWws_LoUSFOh2_BRo_9u3WbEaCbxHkHqSDU8fRc3YqUnnYqLEvI-bfP-Zgy9h2g3S5X_7Z1WXHKmHIU4SW10dAYdEQ_T1K6uYt-wWsbUTF6YkgJHO2PQ8SNRTVHSyuReTOcgpm_WpqyyGZpOpt4pnKSpTBiZ1YmmgyNghRK-5fmhnL9_zRg1oMAFPx6VNdoum0',
+    ];
 
     return Scaffold(
       appBar: AppBar(
@@ -87,26 +104,81 @@ class AssetDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            SizedBox(
-              height: 240,
-              width: double.infinity,
-              child: assetImages.length > 1
-                  ? PageView.builder(
-                      itemCount: assetImages.length,
-                      itemBuilder: (context, index) {
-                        return Image.asset(
-                          assetImages[index],
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                        );
-                      },
-                    )
-                  : Image.asset(
-                      assetImages.first,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                    ),
+            Stack(
+              alignment: Alignment.bottomCenter,
+              children: [
+                SizedBox(
+                  height: 240,
+                  width: double.infinity,
+                  child: PageView.builder(
+                    controller: _pageController,
+                    itemCount: assetImages.length,
+                    onPageChanged: (index) {
+                      setState(() {
+                        _currentPage = index;
+                      });
+                    },
+                    itemBuilder: (context, index) {
+                      return Image.network(
+                        assetImages[index],
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Center(
+                            child: Icon(
+                              Icons.broken_image,
+                              size: 48,
+                              color: Colors.grey,
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+
+                Positioned(
+                  bottom: 10,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(assetImages.length, (index) {
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        height: 8,
+                        width: _currentPage == index ? 16 : 8,
+                        decoration: BoxDecoration(
+                          color: _currentPage == index
+                              ? Colors.white
+                              : Colors.white.withAlpha(128),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+              ],
             ),
+            // SizedBox(
+            //   child: assetImages.length > 1
+            //       ? PageView.builder(
+            //           itemCount: ,
+            //           itemBuilder: (context, index) {
+
+            //           },
+            //         )
+            //       : Image.asset(
+            //           assetImages.first,
+            //           fit: BoxFit.cover,
+            //           width: double.infinity,
+            //         ),
+            // ),
             Padding(
               padding: const EdgeInsets.all(16),
               child: Card(
@@ -151,32 +223,3 @@ class AssetDetailScreen extends StatelessWidget {
     );
   }
 }
-
-
-// Padding(
-//         padding: const EdgeInsets.all(16.0),
-//         child: Column(
-//           crossAxisAlignment: CrossAxisAlignment.center,
-//           children: [
-//             Card(
-//               color: Colors.white,
-//               child: Padding(
-//                 padding: const EdgeInsets.all(16.0),
-//                 child: Column(
-//                   crossAxisAlignment: CrossAxisAlignment.start,
-//                   children: [
-                    
-//                     SizedBox(height: 8),
-                    
-
-//                     _buildDetailRow('Status', asset.status),
-//                     _buildDetailRow('Responsavel', asset.custodian),
-//                     _buildDetailRow('Categoria', asset.category),
-//                     _buildDetailRow('Local', asset.location),
-//                   ],
-//                 ),
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
