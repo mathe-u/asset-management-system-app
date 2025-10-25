@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../models/asset.dart';
 import '../services/api_service.dart';
 
@@ -43,18 +44,23 @@ class AssetDetailScreen extends StatelessWidget {
 
   Widget _buildDetailRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          SizedBox(
-            width: 80,
-            child: Text(
-              '$label:',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+          Text(
+            label,
+            style: GoogleFonts.inter(fontWeight: FontWeight.w500, fontSize: 20),
+          ),
+          SizedBox(height: 2),
+          Text(
+            value,
+            style: GoogleFonts.inter(
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w500,
+              fontSize: 20,
             ),
           ),
-          Expanded(child: Text(value)),
         ],
       ),
     );
@@ -73,20 +79,40 @@ class AssetDetailScreen extends StatelessWidget {
           ),
         ],
       ),
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xfff8f9fa),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Card(
+              color: Colors.white,
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildDetailRow('Nome', asset.name),
-                    _buildDetailRow('Código', asset.code),
+                    Text(
+                      asset.name,
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 34,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Código: ${asset.code}',
+                      style: GoogleFonts.inter(
+                        color: Colors.grey[600],
+                        fontSize: 18,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+
+                    _buildDetailRow('Status', asset.status),
+                    _buildDetailRow('Responsavel', asset.custodian),
+                    _buildDetailRow('Categoria', asset.category),
+                    _buildDetailRow('Local', asset.location),
                   ],
                 ),
               ),
