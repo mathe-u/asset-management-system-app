@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/asset.dart';
 import '../screens/login_screen.dart';
-import '../screens/asset_detail_screen.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
 import '../models/user.dart';
+import '../screens/asset_screen.dart';
+import '../screens/create_asset_screen.dart';
+import '../screens/scanner_screen.dart';
 
 class MainAssetScreen extends StatefulWidget {
   const MainAssetScreen({super.key});
@@ -15,17 +17,16 @@ class MainAssetScreen extends StatefulWidget {
 }
 
 class _MainAssetScreenState extends State<MainAssetScreen> {
-  // int _currentIndex = 0;
+  int _currentIndex = 0;
 
-  // final List<Widget> _screens = const [];
+  final List<Widget> _screens = const [
+    AssetScreen(),
+    ScannerScreen(),
+    CreateAssetScreen(),
+  ];
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  List<Asset> _assets = [];
-  List<Asset> _filteredAssets = [];
   User? _user;
-  bool _isLoading = true;
-  String? _error;
-  final TextEditingController _searchController = TextEditingController();
 
   final Set<Asset> _selectedAssets = {};
   bool get _isSelectionMode => _selectedAssets.isNotEmpty;
@@ -33,91 +34,18 @@ class _MainAssetScreenState extends State<MainAssetScreen> {
   @override
   void initState() {
     super.initState();
-    _loadAssets();
     _loadUserInfo();
-    _searchController.addListener(_filterAssets);
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  void _filterAssets() {
-    final query = _searchController.text.toLowerCase();
-    setState(() {
-      if (query.isEmpty) {
-        _filteredAssets = _assets;
-      } else {
-        _filteredAssets = _assets.where((asset) {
-          return asset.name.toLowerCase().contains(query);
-        }).toList();
-      }
-    });
   }
 
   void _loadUserInfo() async {
     final int? userId = await StorageService.getUserId();
     final User user = await ApiService.getUserById(userId);
 
-    print(user.id);
-    print(user.username);
-    print(user.email);
-
     if (mounted) {
       setState(() {
         _user = user;
       });
     }
-  }
-
-  void _loadAssets() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-      _isLoading = false;
-    });
-
-    try {
-      final List<Asset> assets = await ApiService.getAssets();
-
-      if (mounted) {
-        setState(() {
-          _assets = assets;
-          _filteredAssets = assets;
-
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _error = e.toString();
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  void _showAssetDetail(Asset asset) {
-    Navigator.of(context)
-        .push(
-          MaterialPageRoute(
-            builder: (context) => AssetDetailScreen(asset: asset),
-          ),
-        )
-        .then((_) => _loadAssets());
-  }
-
-  void _toggleSelection(Asset asset) {
-    setState(() {
-      if (_selectedAssets.contains(asset)) {
-        _selectedAssets.remove(asset);
-      } else {
-        _selectedAssets.add(asset);
-      }
-    });
   }
 
   void _clearSelection() {
@@ -278,183 +206,45 @@ class _MainAssetScreenState extends State<MainAssetScreen> {
       ),
     );
 
+    final Container navigationBar = Container(
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: Color(0xffe5e7eb), width: 1.0)),
+      ),
+      child: BottomNavigationBar(
+        backgroundColor: Colors.white,
+        selectedItemColor: const Color(0xFFDC2626),
+        unselectedItemColor: Color(0xff6c757d),
+        currentIndex: _currentIndex,
+        onTap: (index) => setState(() {
+          _currentIndex = index;
+        }),
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.inventory_2_outlined),
+            activeIcon: Icon(Icons.inventory_2),
+            label: 'Ativos',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.qr_code_scanner_outlined),
+            activeIcon: Icon(Icons.qr_code_scanner),
+            label: 'Scanner',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.add_circle_outline),
+            activeIcon: Icon(Icons.add_circle),
+            label: 'Criar',
+          ),
+        ],
+      ),
+    );
+
     return Scaffold(
       key: _scaffoldKey,
       appBar: _buildAppBar(),
       drawer: sideBar,
       backgroundColor: const Color(0xFFF8F9FA),
-      body: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16.0),
-            color: const Color(0xFFF8F9FA),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8.0),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'Buscar...',
-                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                    borderSide: BorderSide.none,
-                  ),
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _error != null
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text('Erro: $_error'),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: _loadAssets,
-                          child: const Text('Tentar Novamente'),
-                        ),
-                      ],
-                    ),
-                  )
-                : _filteredAssets.isEmpty
-                ? const Center(child: Text('Nenhum asset encontrado'))
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: _filteredAssets.length,
-                    itemBuilder: (context, index) {
-                      final asset = _filteredAssets[index];
-                      final isSelected = _selectedAssets.contains(asset);
-
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        color: Colors.white,
-                        elevation: isSelected ? 4 : 2,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(40),
-
-                          child: ListTile(
-                            splashColor: Colors.transparent,
-                            // hoverColor: Colors.transparent,
-                            selectedColor: Colors.grey.shade800,
-                            iconColor: Colors.black,
-                            selected: isSelected,
-                            selectedTileColor: const Color.fromARGB(
-                              255,
-                              255,
-                              150,
-                              150,
-                            ).withValues(alpha: 0.2),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            leading: Container(
-                              width: 45,
-                              height: 45,
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? const Color(0xFFDC2626)
-                                    : const Color(0xFFF3F4F6),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Center(
-                                child: isSelected
-                                    ? const Icon(
-                                        Icons.check,
-                                        color: Colors.white,
-                                      )
-                                    : Text(
-                                        asset.name[0].toUpperCase(),
-                                        style: const TextStyle(
-                                          color: Colors.black,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 20,
-                                        ),
-                                      ),
-                              ),
-                            ),
-                            title: Text(
-                              asset.name,
-                              style: GoogleFonts.inter(
-                                fontWeight: FontWeight.w500,
-                                fontSize: 18,
-                                color: Colors.black,
-                              ),
-                            ),
-                            subtitle: Padding(
-                              padding: const EdgeInsets.only(top: 4),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Código: ${asset.code}',
-                                    style: const TextStyle(fontSize: 14),
-                                  ),
-                                  Text(
-                                    asset.location,
-                                    style: const TextStyle(fontSize: 14),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            trailing: _isSelectionMode
-                                ? null
-                                : const Icon(Icons.arrow_forward_ios, size: 16),
-                            onTap: () {
-                              if (_isSelectionMode) {
-                                _toggleSelection(asset);
-                              } else {
-                                _showAssetDetail(asset);
-                              }
-                            },
-                            onLongPress: () {
-                              _toggleSelection(asset);
-                            },
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-          ),
-        ],
-      ),
+      body: _screens[_currentIndex],
+      bottomNavigationBar: navigationBar,
     );
   }
 }
-
-// AppBar(
-//         backgroundColor: const Color(0xFFDC2626),
-        // title: Text(
-        //   'Assets',
-        //   style: GoogleFonts.inter(
-        //     color: Colors.white,
-        //     fontSize: 26,
-        //     fontWeight: FontWeight.bold,
-        //   ),
-        // ),
-//         centerTitle: true,
-        
-//       ),
