@@ -121,6 +121,26 @@ class ApiService {
     }
   }
 
+  static Future<Asset> getAssetByCode(String code) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/assets/$code/'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(utf8.decode(response.bodyBytes));
+        return Asset.fromJson(data);
+      } else if (response.statusCode == 404) {
+        throw Exception('Asset not found');
+      } else {
+        throw Exception('Failed to load asset: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching asset: $e');
+    }
+  }
+
   static Future<void> deleteAsset(String code) async {
     try {
       final response = await http.delete(
