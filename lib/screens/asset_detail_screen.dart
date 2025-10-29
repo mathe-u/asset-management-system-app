@@ -82,9 +82,9 @@ class _AsserDetailScreenState extends State<AssetDetailScreen> {
   Widget build(BuildContext context) {
     final Asset asset = widget.asset;
     final List<String> assetImages = [
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuAExuLLxNWza7jmqEKG8j4dA4PNYD5BnQ3lwHZh3YaMZN1TGqR8SpfIyP61MpIVX3irpJAsFyFxdGWws_LoUSFOh2_BRo_9u3WbEaCbxHkHqSDU8fRc3YqUnnYqLEvI-bfP-Zgy9h2g3S5X_7Z1WXHKmHIU4SW10dAYdEQ_T1K6uYt-wWsbUTF6YkgJHO2PQ8SNRTVHSyuReTOcgpm_WpqyyGZpOpt4pnKSpTBiZ1YmmgyNghRK-5fmhnL9_zRg1oMAFPx6VNdoum0',
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuAExuLLxNWza7jmqEKG8j4dA4PNYD5BnQ3lwHZh3YaMZN1TGqR8SpfIyP61MpIVX3irpJAsFyFxdGWws_LoUSFOh2_BRo_9u3WbEaCbxHkHqSDU8fRc3YqUnnYqLEvI-bfP-Zgy9h2g3S5X_7Z1WXHKmHIU4SW10dAYdEQ_T1K6uYt-wWsbUTF6YkgJHO2PQ8SNRTVHSyuReTOcgpm_WpqyyGZpOpt4pnKSpTBiZ1YmmgyNghRK-5fmhnL9_zRg1oMAFPx6VNdoum0',
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuAExuLLxNWza7jmqEKG8j4dA4PNYD5BnQ3lwHZh3YaMZN1TGqR8SpfIyP61MpIVX3irpJAsFyFxdGWws_LoUSFOh2_BRo_9u3WbEaCbxHkHqSDU8fRc3YqUnnYqLEvI-bfP-Zgy9h2g3S5X_7Z1WXHKmHIU4SW10dAYdEQ_T1K6uYt-wWsbUTF6YkgJHO2PQ8SNRTVHSyuReTOcgpm_WpqyyGZpOpt4pnKSpTBiZ1YmmgyNghRK-5fmhnL9_zRg1oMAFPx6VNdoum0',
+      // 'https://lh3.googleusercontent.com/aida-public/',
+      // 'https://lh3.googleusercontent.com/aida-public/AB6AXuAExuLLxNWza7jmqEKG8j4dA4PNYD5BnQ3lwHZh3YaMZN1TGqR8SpfIyP61MpIVX3irpJAsFyFxdGWws_LoUSFOh2_BRo_9u3WbEaCbxHkHqSDU8fRc3YqUnnYqLEvI-bfP-Zgy9h2g3S5X_7Z1WXHKmHIU4SW10dAYdEQ_T1K6uYt-wWsbUTF6YkgJHO2PQ8SNRTVHSyuReTOcgpm_WpqyyGZpOpt4pnKSpTBiZ1YmmgyNghRK-5fmhnL9_zRg1oMAFPx6VNdoum0',
+      // 'https://lh3.googleusercontent.com/aida-public/AB6AXuAExuLLxNWza7jmqEKG8j4dA4PNYD5BnQ3lwHZh3YaMZN1TGqR8SpfIyP61MpIVX3irpJAsFyFxdGWws_LoUSFOh2_BRo_9u3WbEaCbxHkHqSDU8fRc3YqUnnYqLEvI-bfP-Zgy9h2g3S5X_7Z1WXHKmHIU4SW10dAYdEQ_T1K6uYt-wWsbUTF6YkgJHO2PQ8SNRTVHSyuReTOcgpm_WpqyyGZpOpt4pnKSpTBiZ1YmmgyNghRK-5fmhnL9_zRg1oMAFPx6VNdoum0',
     ];
 
     return Scaffold(
@@ -110,75 +110,85 @@ class _AsserDetailScreenState extends State<AssetDetailScreen> {
                 SizedBox(
                   height: 240,
                   width: double.infinity,
-                  child: PageView.builder(
-                    controller: _pageController,
-                    itemCount: assetImages.length,
-                    onPageChanged: (index) {
-                      setState(() {
-                        _currentPage = index;
-                      });
-                    },
-                    itemBuilder: (context, index) {
-                      return Image.network(
-                        assetImages[index],
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return const Center(
-                            child: CircularProgressIndicator(),
-                          );
-                        },
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Center(
-                            child: Icon(
-                              Icons.broken_image,
-                              size: 48,
-                              color: Colors.grey,
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
+                  child: assetImages.isEmpty
+                      ? const Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.image_not_supported,
+                                size: 64,
+                                color: Colors.grey,
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                'Nenhuma imagem disponível',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : PageView.builder(
+                          controller: _pageController,
+                          itemCount: assetImages.length,
+                          onPageChanged: (index) {
+                            setState(() {
+                              _currentPage = index;
+                            });
+                          },
+                          itemBuilder: (context, index) {
+                            return Image.network(
+                              assetImages[index],
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              loadingBuilder:
+                                  (context, child, loadingProgress) {
+                                    if (loadingProgress == null) return child;
+                                    return const Center(
+                                      child: CircularProgressIndicator(),
+                                    );
+                                  },
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Center(
+                                  child: Icon(
+                                    Icons.broken_image,
+                                    size: 48,
+                                    color: Colors.grey,
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
                 ),
 
-                Positioned(
-                  bottom: 10,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(assetImages.length, (index) {
-                      return AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        height: 8,
-                        width: _currentPage == index ? 16 : 8,
-                        decoration: BoxDecoration(
-                          color: _currentPage == index
-                              ? Colors.white
-                              : Colors.white.withAlpha(128),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      );
-                    }),
+                if (assetImages.isNotEmpty)
+                  Positioned(
+                    bottom: 10,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(assetImages.length, (index) {
+                        return AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          height: 8,
+                          width: _currentPage == index ? 16 : 8,
+                          decoration: BoxDecoration(
+                            color: _currentPage == index
+                                ? Colors.white
+                                : Colors.white.withAlpha(128),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        );
+                      }),
+                    ),
                   ),
-                ),
               ],
             ),
-            // SizedBox(
-            //   child: assetImages.length > 1
-            //       ? PageView.builder(
-            //           itemCount: ,
-            //           itemBuilder: (context, index) {
 
-            //           },
-            //         )
-            //       : Image.asset(
-            //           assetImages.first,
-            //           fit: BoxFit.cover,
-            //           width: double.infinity,
-            //         ),
-            // ),
             Padding(
               padding: const EdgeInsets.all(16),
               child: Card(
