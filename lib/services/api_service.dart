@@ -159,6 +159,26 @@ class ApiService {
     }
   }
 
+  static Future<List<String>> printAssets(List<String> assetCodes) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/assets/print/'),
+        headers: _headers,
+        body: json.encode({'asset_codes': assetCodes}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(utf8.decode(response.bodyBytes));
+        return List<String>.from(data['assets']);
+      } else {
+        final errorBody = json.decode(utf8.decode(response.bodyBytes));
+        throw Exception(errorBody['message'] ?? 'Fail to comunicate server');
+      }
+    } catch (e) {
+      throw Exception('Error printing assets: $e');
+    }
+  }
+
   static Future<Uint8List> downloadImage(String url) async {
     final response = await http.get(Uri.parse(url));
     if (response.statusCode == 200) {
