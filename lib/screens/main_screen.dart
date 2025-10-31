@@ -23,7 +23,7 @@ class MainScreen extends StatefulWidget {
 class _MainAssetScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
-  late final List<Widget> _screens;
+  // late final List<Widget> _screens;
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   User? _user;
@@ -35,14 +35,14 @@ class _MainAssetScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     _loadUserInfo();
-    _screens = [
-      AssetScreen(
-        selectedAssets: _selectedAssets,
-        onToggleSelection: _toggleAssetSelection,
-      ),
-      const ScannerScreen(),
-      const CreateAssetScreen(),
-    ];
+    // _screens = [
+    //   AssetScreen(
+    //     selectedAssets: _selectedAssets,
+    //     onToggleSelection: _toggleAssetSelection,
+    //   ),
+    //   const ScannerScreen(),
+    //   const CreateAssetScreen(),
+    // ];
   }
 
   void _toggleAssetSelection(Asset asset) {
@@ -216,6 +216,15 @@ class _MainAssetScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final List<Widget> screens = [
+      AssetScreen(
+        selectedAssets: _selectedAssets,
+        onToggleSelection: _toggleAssetSelection,
+      ),
+      const ScannerScreen(),
+      const CreateAssetScreen(),
+    ];
+
     final Widget sideBar = Drawer(
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
@@ -345,7 +354,7 @@ class _MainAssetScreenState extends State<MainScreen> {
       appBar: _buildAppBar(),
       drawer: sideBar,
       backgroundColor: const Color(0xFFF8F9FA),
-      body: _screens[_currentIndex],
+      body: screens[_currentIndex],
       bottomNavigationBar: navigationBar,
     );
   }

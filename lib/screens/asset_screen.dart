@@ -158,7 +158,7 @@ class _AssetScreenState extends State<AssetScreen> {
                   itemCount: _filteredAssets.length,
                   itemBuilder: (context, index) {
                     final asset = _filteredAssets[index];
-                    final isSelected = _selectedAssets.contains(asset);
+                    final bool isSelected = _selectedAssets.contains(asset);
 
                     return Card(
                       margin: const EdgeInsets.only(bottom: 12),

@@ -21,6 +21,17 @@ class Asset {
     required this.images,
   });
 
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is Asset &&
+            runtimeType == other.runtimeType &&
+            code == other.code;
+  }
+
+  @override
+  int get hashCode => code.hashCode;
+
   factory Asset.fromJson(Map<String, dynamic> json) {
     final List<dynamic> imageList = json['images'];
 
