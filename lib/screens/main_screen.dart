@@ -1,5 +1,9 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 import '../models/asset.dart';
 import '../screens/login_screen.dart';
 import '../services/api_service.dart';
@@ -9,21 +13,17 @@ import '../screens/asset_screen.dart';
 import '../screens/create_asset_screen.dart';
 import '../screens/scanner_screen.dart';
 
-class MainAssetScreen extends StatefulWidget {
-  const MainAssetScreen({super.key});
+class MainScreen extends StatefulWidget {
+  const MainScreen({super.key});
 
   @override
-  State<MainAssetScreen> createState() => _MainAssetScreenState();
+  State<MainScreen> createState() => _MainAssetScreenState();
 }
 
-class _MainAssetScreenState extends State<MainAssetScreen> {
+class _MainAssetScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = const [
-    AssetScreen(),
-    ScannerScreen(),
-    CreateAssetScreen(),
-  ];
+  late final List<Widget> _screens;
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   User? _user;
@@ -35,6 +35,24 @@ class _MainAssetScreenState extends State<MainAssetScreen> {
   void initState() {
     super.initState();
     _loadUserInfo();
+    _screens = [
+      AssetScreen(
+        selectedAssets: _selectedAssets,
+        onToggleSelection: _toggleAssetSelection,
+      ),
+      const ScannerScreen(),
+      const CreateAssetScreen(),
+    ];
+  }
+
+  void _toggleAssetSelection(Asset asset) {
+    setState(() {
+      if (_selectedAssets.contains(asset)) {
+        _selectedAssets.remove(asset);
+      } else {
+        _selectedAssets.add(asset);
+      }
+    });
   }
 
   void _loadUserInfo() async {
@@ -52,6 +70,90 @@ class _MainAssetScreenState extends State<MainAssetScreen> {
     setState(() {
       _selectedAssets.clear();
     });
+  }
+
+  Future<Uint8List> _generatePdf(
+    List<String> barcodeUrls,
+    Map<String, Asset> assetMap,
+  ) async {
+    final pdf = pw.Document();
+    final List<pw.Widget> labels = [];
+
+    for (final url in barcodeUrls) {
+      final imageBytes = await ApiService.downloadImage(url);
+      final image = pw.MemoryImage(imageBytes);
+
+      final code = url.split('barcode_').last.split('.png').first;
+      final asset = assetMap[code];
+
+      labels.add(
+        pw.Container(
+          padding: const pw.EdgeInsets.all(10),
+          decoration: pw.BoxDecoration(
+            border: pw.Border.all(color: PdfColors.grey, width: 0.5),
+            borderRadius: pw.BorderRadius.circular(5),
+          ),
+          child: pw.Column(
+            mainAxisSize: pw.MainAxisSize.min,
+            children: [
+              pw.Text(
+                asset?.name ?? 'Sem nome',
+                style: pw.TextStyle(
+                  fontWeight: pw.FontWeight.bold,
+                  fontSize: 10,
+                ),
+              ),
+              pw.SizedBox(height: 4),
+              pw.SizedBox(width: 150, height: 75, child: pw.Image(image)),
+              pw.Text(
+                'Código: ${asset?.code ?? 'N/A'}',
+                style: const pw.TextStyle(fontSize: 8),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    pdf.addPage(
+      pw.MultiPage(
+        build: (context) => [
+          pw.Wrap(spacing: 10, runSpacing: 10, children: labels),
+        ],
+        pageFormat: PdfPageFormat.a4,
+      ),
+    );
+
+    return pdf.save();
+  }
+
+  Future<void> _printAssets() async {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Gerando etiquetas...')));
+
+    try {
+      final codes = _selectedAssets.map((asset) => asset.code).toList();
+      final barcodeUrls = await ApiService.printAssets(codes);
+
+      final assetMap = {for (Asset asset in _selectedAssets) asset.code: asset};
+
+      final pdfBytes = await _generatePdf(barcodeUrls, assetMap);
+      await Printing.layoutPdf(
+        onLayout: (PdfPageFormat format) async => pdfBytes,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erro ao gerar PDF: $e')));
+      }
+    }
   }
 
   Future<void> _handleLogout(BuildContext context) async {
@@ -79,7 +181,7 @@ class _MainAssetScreenState extends State<MainAssetScreen> {
         ),
         actions: [
           IconButton(
-            onPressed: () {},
+            onPressed: _printAssets,
             icon: const Icon(Icons.print, color: Colors.white),
             tooltip: 'Imprimir Etiquetas',
           ),

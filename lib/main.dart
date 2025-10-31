@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import './screens/login_screen.dart';
 import './services/api_service.dart';
 import './services/storage_service.dart';
-import './screens/main_asset_screen.dart';
+import './screens/main_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,7 +27,7 @@ class AssetApp extends StatelessWidget {
         primaryColor: Colors.deepOrange,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: startOnMain ? const MainAssetScreen() : const LoginScreen(),
+      home: startOnMain ? const MainScreen() : const LoginScreen(),
       debugShowCheckedModeBanner: false,
     );
   }

@@ -5,7 +5,14 @@ import '../screens/asset_detail_screen.dart';
 import '../services/api_service.dart';
 
 class AssetScreen extends StatefulWidget {
-  const AssetScreen({super.key});
+  final Set<Asset> selectedAssets;
+  final void Function(Asset) onToggleSelection;
+
+  const AssetScreen({
+    super.key,
+    required this.selectedAssets,
+    required this.onToggleSelection,
+  });
 
   @override
   State<AssetScreen> createState() => _AssetScreenState();
@@ -17,8 +24,11 @@ class _AssetScreenState extends State<AssetScreen> {
   bool _isLoading = true;
   String? _error;
   final TextEditingController _searchController = TextEditingController();
-  final Set<Asset> _selectedAssets = {};
+  // final Set<Asset> _selectedAssets = {};
 
+  // bool get _isSelectionMode => _selectedAssets.isNotEmpty;
+
+  Set<Asset> get _selectedAssets => widget.selectedAssets;
   bool get _isSelectionMode => _selectedAssets.isNotEmpty;
 
   void _loadAssets() async {
@@ -57,13 +67,7 @@ class _AssetScreenState extends State<AssetScreen> {
   }
 
   void _toggleSelection(Asset asset) {
-    setState(() {
-      if (_selectedAssets.contains(asset)) {
-        _selectedAssets.remove(asset);
-      } else {
-        _selectedAssets.add(asset);
-      }
-    });
+    widget.onToggleSelection(asset);
   }
 
   void _filterAssets() {
@@ -250,6 +254,6 @@ class _AssetScreenState extends State<AssetScreen> {
       ],
     );
 
-    return Scaffold(body: body);
+    return body;
   }
 }
