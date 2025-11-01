@@ -186,7 +186,7 @@ class _MainAssetScreenState extends State<MainScreen> {
             tooltip: 'Imprimir Etiquetas',
           ),
           IconButton(
-            onPressed: () {},
+            onPressed: _deleteAsset,
             icon: Icon(Icons.delete, color: Colors.white),
             tooltip: 'Deletar Ativos',
           ),
@@ -357,5 +357,58 @@ class _MainAssetScreenState extends State<MainScreen> {
       body: screens[_currentIndex],
       bottomNavigationBar: navigationBar,
     );
+  }
+
+  void _deleteAsset() async {
+    final confirmed = await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirmar Exclusão'),
+        content: Text(
+          'Tem certeza que deseja deletar os ${_selectedAssets.length} ativos selecionados?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Deletar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed ?? false) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Deletando Ativos...')));
+      final deletedFutures = _selectedAssets
+          .map((asset) => ApiService.deleteAsset(asset.code))
+          .toList();
+
+      final results = await Future.wait(
+        deletedFutures.map((f) => f.then((_) => true).catchError((_) => false)),
+      );
+
+      final successCount = results.where((r) => r).length;
+      final failureCount = results.length - successCount;
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '$successCount ativos deletados. $failureCount falharam.',
+            ),
+          ),
+        );
+      }
+
+      _clearSelection();
+      // _loadAssets();
+    }
   }
 }
