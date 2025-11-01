@@ -170,7 +170,7 @@ class _MainAssetScreenState extends State<MainScreen> {
   AppBar _buildAppBar() {
     if (_isSelectionMode) {
       return AppBar(
-        backgroundColor: Color(0xFFEA2831),
+        backgroundColor: Color(0xFFFF7043),
         title: Text(
           '${_selectedAssets.length} selecionado(s)',
           style: GoogleFonts.inter(color: Colors.white),
@@ -194,7 +194,7 @@ class _MainAssetScreenState extends State<MainScreen> {
       );
     } else {
       return AppBar(
-        backgroundColor: Color(0xFFEA2831),
+        backgroundColor: Color(0xFFFF7043),
         title: Text(
           'Assets',
           style: GoogleFonts.inter(
@@ -323,7 +323,7 @@ class _MainAssetScreenState extends State<MainScreen> {
       ),
       child: BottomNavigationBar(
         backgroundColor: Colors.white,
-        selectedItemColor: const Color(0xFFDC2626),
+        selectedItemColor: const Color(0xFFFF7043),
         unselectedItemColor: Color(0xff6c757d),
         currentIndex: _currentIndex,
         onTap: (index) => setState(() {
