@@ -44,9 +44,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
       final Map<String, dynamic> authData = await ApiService.login();
 
-      if (authData.containsKey('token') && authData.containsKey('user_id')) {
+      if (authData.containsKey('token') && authData.containsKey('id')) {
         final String token = authData['token'];
-        final int userId = authData['user_id'];
+        final int userId = authData['id'];
 
         ApiService.setToken(token);
         await StorageService.saveToken(token);
