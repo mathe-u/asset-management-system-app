@@ -255,7 +255,7 @@ class ApiService {
     }
   }
 
-  static Future<List<String>> getStatusChoices() async {
+  static Future<List<dynamic>> getStatusChoices() async {
     try {
       final response = await http.get(
         Uri.parse('$_baseUrl/status-choices/'),
@@ -265,6 +265,7 @@ class ApiService {
       if (response.statusCode == 200) {
         final data = json.decode(utf8.decode(response.bodyBytes));
         final statusChoices = data['status_choices'];
+
         return statusChoices.map((json) => json['label'] as String).toList();
       } else {
         throw Exception('${response.statusCode}');
