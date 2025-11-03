@@ -255,6 +255,25 @@ class ApiService {
     }
   }
 
+  static Future<List<String>> getStatusChoices() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/status-choices/'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(utf8.decode(response.bodyBytes));
+        final statusChoices = data['status_choices'];
+        return statusChoices.map((json) => json['label'] as String).toList();
+      } else {
+        throw Exception('${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching status: $e');
+    }
+  }
+
   static Future<Uint8List> downloadImage(String url) async {
     final response = await http.get(Uri.parse(url));
     if (response.statusCode == 200) {
