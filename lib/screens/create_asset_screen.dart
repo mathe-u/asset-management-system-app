@@ -1,3 +1,4 @@
+import 'package:assets/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
@@ -18,7 +19,12 @@ class _CreateAssetState extends State<CreateAssetScreen> {
   final _userController = TextEditingController();
   bool _isLoading = false;
 
-  String? _selectedStatus = null;
+  String? _selectedCategory;
+  String? _selectedStatus;
+
+  List<String> _categories = [];
+  bool _categoriesLoading = true;
+  String? _categoriesError;
 
   final List<File> _images = [];
   final ImagePicker _picker = ImagePicker();
@@ -76,6 +82,27 @@ class _CreateAssetState extends State<CreateAssetScreen> {
     }
   }
 
+  Future<void> _loadCategories() async {
+    try {
+      final categories = await ApiService.getCategories();
+      setState(() {
+        _categories = categories.cast<String>();
+        _categoriesLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _categoriesError = 'Erro ao carregar categorias';
+        _categoriesLoading = false;
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCategories();
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -86,6 +113,14 @@ class _CreateAssetState extends State<CreateAssetScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // xxx() async {
+    //   print('////////////////////////');
+    //   // print(await s);
+    //   print('////////////////////////');
+    // }
+
+    // xxx();
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Container(
@@ -153,40 +188,68 @@ class _CreateAssetState extends State<CreateAssetScreen> {
                   textAlign: TextAlign.left,
                 ),
                 const SizedBox(height: 8),
-                TextFormField(
-                  controller: _categoryController,
-                  decoration: InputDecoration(
-                    hintText: 'Selecione a categoria',
-                    hintStyle: const TextStyle(color: Colors.black),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: const OutlineInputBorder(),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 15,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFdbdfe6),
-                        width: 1,
+                _categoriesLoading
+                    ? const SizedBox(
+                        height: 56,
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: Color(0xFFFF7043),
+                          ),
+                        ),
+                      )
+                    : _categoriesError != null
+                    ? TextFormField(
+                        enabled: false,
+                        decoration: InputDecoration(
+                          hintText: _categoriesError,
+                          filled: true,
+                          fillColor: Colors.red[50],
+                          border: const OutlineInputBorder(),
+                        ),
+                      )
+                    : DropdownButtonFormField<String>(
+                        initialValue: _selectedCategory,
+                        hint: const Text('Selecione a categoria'),
+                        decoration: InputDecoration(
+                          hintText: 'Selecione a categoria',
+                          hintStyle: const TextStyle(color: Colors.black),
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: const OutlineInputBorder(),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 15,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFdbdfe6),
+                              width: 1,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFdbdfe6),
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                        items: _categories.map((category) {
+                          return DropdownMenuItem(
+                            value: category,
+                            child: Text(category),
+                          );
+                        }).toList(),
+                        onChanged: _isLoading
+                            ? null
+                            : (value) {
+                                setState(() {
+                                  _selectedCategory = value;
+                                  _categoryController.text = value ?? '';
+                                });
+                              },
                       ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFdbdfe6),
-                        width: 1.5,
-                      ),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Por favor, preencha o campo';
-                    }
-                    return null;
-                  },
-                ),
 
                 const SizedBox(height: 16),
                 const Text(
@@ -233,6 +296,14 @@ class _CreateAssetState extends State<CreateAssetScreen> {
                     }
                     return null;
                   },
+                  // onChanged: _isLoading
+                  //           ? null
+                  //           : (value) {
+                  //               setState(() {
+                  //                 _selectedCategory = value;
+                  //                 _categoryController.text = value ?? '';
+                  //               });
+                  //             },
                 ),
 
                 const SizedBox(height: 16),
