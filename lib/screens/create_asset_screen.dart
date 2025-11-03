@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../models/user.dart';
 import '../services/api_service.dart';
+import '../models/asset.dart';
 
 class CreateAssetScreen extends StatefulWidget {
   const CreateAssetScreen({super.key});
@@ -30,6 +31,10 @@ class _CreateAssetState extends State<CreateAssetScreen> {
   bool _categoriesLoading = true;
   String? _categoriesError;
 
+  List<String> _statusChoices = [];
+  bool _statusLoading = true;
+  String? _statusChoicesError;
+
   List<User> _users = [];
   bool _usersLoading = true;
   String? _usersError;
@@ -41,13 +46,6 @@ class _CreateAssetState extends State<CreateAssetScreen> {
   final List<File> _images = [];
   final ImagePicker _picker = ImagePicker();
 
-  final List<String> _statusChoices = [
-    'Disponivel',
-    'Em Uso',
-    'Manutenção',
-    'Quebrado',
-  ];
-
   void _createAsset() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -56,16 +54,39 @@ class _CreateAssetState extends State<CreateAssetScreen> {
     });
 
     try {
+      final asset = Asset(
+        name: _nameController.text.trim(),
+        code: '',
+        category: _selectedCategory ?? '',
+        status: _selectedStatus ?? '',
+        custodian: _selectedUser ?? '',
+        location: _selectedLocation ?? '',
+        barcode: '',
+        images: [],
+      );
+
+      await ApiService.createAsset(
+        asset,
+        _images.map((img) => img.path).toList(),
+      );
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Asset criado com sucesso!')),
         );
+        // Limpar o formulário
+        _formKey.currentState?.reset();
         _nameController.clear();
         _categoryController.clear();
         _userController.clear();
+        _locationController.clear();
+
         setState(() {
           _images.clear();
+          _selectedCategory = null;
           _selectedStatus = null;
+          _selectedUser = null;
+          _selectedLocation = null;
         });
       }
     } catch (e) {
@@ -109,6 +130,34 @@ class _CreateAssetState extends State<CreateAssetScreen> {
     }
   }
 
+  Future<void> _loadStatusChoices() async {
+    try {
+      final statusChoices = await ApiService.getStatusChoices();
+
+      setState(() {
+        _statusChoices = statusChoices.map((stutus) {
+          if (stutus == 'Available') {
+            return 'Disponivel';
+          } else if (stutus == 'Broken') {
+            return 'Quebrado';
+          } else if (stutus == 'Maintenance') {
+            return 'Manutencao';
+          } else if (stutus == 'InUse') {
+            return 'Em Uso';
+          } else {
+            return stutus as String;
+          }
+        }).toList();
+      });
+    } catch (e) {
+      setState(() {
+        _statusChoicesError = 'Erro ao carregar status';
+      });
+    } finally {
+      _statusLoading = false;
+    }
+  }
+
   Future<void> _loadUsers() async {
     try {
       final List<User> users = await ApiService.getUsers();
@@ -147,6 +196,7 @@ class _CreateAssetState extends State<CreateAssetScreen> {
   void initState() {
     super.initState();
     _loadCategories();
+    _loadStatusChoices();
     _loadUsers();
     _loadLocations();
   }
@@ -311,62 +361,84 @@ class _CreateAssetState extends State<CreateAssetScreen> {
                   textAlign: TextAlign.left,
                 ),
                 const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
-                  // value: _selectedStatus,
-                  initialValue: _selectedStatus,
-                  hint: Text(
-                    'Selecione o status',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 16,
-                      fontWeight: FontWeight.normal,
-                    ),
-                  ),
-                  decoration: InputDecoration(
-                    // hintText: 'Selecione o status',
-                    hintStyle: const TextStyle(color: Colors.black),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 15,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(
-                        color: Color(0xFFdbdfe6),
-                        width: 1,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(
-                        color: Color(0xFFdbdfe6),
-                        width: 1.5,
-                      ),
-                    ),
-                  ),
+                _statusLoading
+                    ? const SizedBox(
+                        height: 56,
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: Color(0xFFFF7043),
+                          ),
+                        ),
+                      )
+                    : _statusChoicesError != null
+                    ? TextFormField(
+                        enabled: false,
+                        decoration: InputDecoration(
+                          hintText: _statusChoicesError,
+                          filled: true,
+                          fillColor: Colors.red[50],
+                          border: const OutlineInputBorder(),
+                        ),
+                      )
+                    : DropdownButtonFormField<String>(
+                        // value: _selectedStatus,
+                        initialValue: _selectedStatus,
+                        hint: Text(
+                          'Selecione o status',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 16,
+                            fontWeight: FontWeight.normal,
+                          ),
+                        ),
+                        decoration: InputDecoration(
+                          // hintText: 'Selecione o status',
+                          hintStyle: const TextStyle(color: Colors.black),
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 15,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(
+                              color: Color(0xFFdbdfe6),
+                              width: 1,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(
+                              color: Color(0xFFdbdfe6),
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
 
-                  items: _statusChoices.map((status) {
-                    return DropdownMenuItem(value: status, child: Text(status));
-                  }).toList(),
+                        items: _statusChoices.map((status) {
+                          return DropdownMenuItem(
+                            value: status,
+                            child: Text(status),
+                          );
+                        }).toList(),
 
-                  onChanged: _isLoading
-                      ? null
-                      : (value) {
-                          setState(() {
-                            _selectedStatus = value;
-                          });
+                        onChanged: _isLoading
+                            ? null
+                            : (value) {
+                                setState(() {
+                                  _selectedStatus = value;
+                                });
+                              },
+
+                        validator: (value) {
+                          if (value == null) {
+                            return 'Por favor, selecione um status';
+                          }
+                          return null;
                         },
-
-                  validator: (value) {
-                    if (value == null) {
-                      return 'Por favor, selecione um status';
-                    }
-                    return null;
-                  },
-                ),
+                      ),
 
                 const SizedBox(height: 16),
                 const Text(
@@ -398,7 +470,7 @@ class _CreateAssetState extends State<CreateAssetScreen> {
                           border: const OutlineInputBorder(),
                         ),
                       )
-                    : DropdownButtonFormField(
+                    : DropdownButtonFormField<String>(
                         initialValue: _selectedUser,
                         hint: const Text(
                           'Selecione um usuário responsável',
@@ -410,7 +482,6 @@ class _CreateAssetState extends State<CreateAssetScreen> {
                         ),
                         // style: const TextStyle(color: Colors.black),
                         decoration: InputDecoration(
-                          hintText: '',
                           hintStyle: const TextStyle(color: Colors.black),
                           filled: true,
                           fillColor: Colors.white,
@@ -444,8 +515,8 @@ class _CreateAssetState extends State<CreateAssetScreen> {
                             ? null
                             : (value) {
                                 setState(() {
-                                  // _selectedUser = value;
-                                  // _userController.text = value ?? '';
+                                  _selectedUser = value;
+                                  _userController.text = value ?? '';
                                 });
                               },
                       ),
@@ -480,7 +551,7 @@ class _CreateAssetState extends State<CreateAssetScreen> {
                           border: const OutlineInputBorder(),
                         ),
                       )
-                    : DropdownButtonFormField(
+                    : DropdownButtonFormField<String>(
                         initialValue: _selectedLocation,
                         hint: const Text(
                           'Selecione um local',
@@ -525,39 +596,12 @@ class _CreateAssetState extends State<CreateAssetScreen> {
                         onChanged: _isLoading
                             ? null
                             : (value) {
-                                setState(() {});
+                                setState(() {
+                                  _selectedLocation = value;
+                                });
                               },
                       ),
 
-                // TextFormField(
-                //   controller: TextEditingController(),
-                //   decoration: InputDecoration(
-                //     // labelText: 'Usuário Responsável',
-                //     hintText: 'Selecione um local',
-                //     hintStyle: const TextStyle(color: Colors.black),
-                //     filled: true,
-                //     fillColor: Colors.white,
-                //     border: const OutlineInputBorder(),
-                //     contentPadding: const EdgeInsets.symmetric(
-                //       horizontal: 12,
-                //       vertical: 15,
-                //     ),
-                //     enabledBorder: OutlineInputBorder(
-                //       borderRadius: BorderRadius.circular(8),
-                //       borderSide: const BorderSide(
-                //         color: Color(0xFFdbdfe6),
-                //         width: 1,
-                //       ),
-                //     ),
-                //     focusedBorder: OutlineInputBorder(
-                //       borderRadius: BorderRadius.circular(8),
-                //       borderSide: const BorderSide(
-                //         color: Color(0xFFdbdfe6),
-                //         width: 1.5,
-                //       ),
-                //     ),
-                //   ),
-                // ),
                 const SizedBox(height: 16),
                 const Text(
                   'Imagem',
