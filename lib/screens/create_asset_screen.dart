@@ -20,7 +20,7 @@ class _CreateAssetState extends State<CreateAssetScreen> {
 
   String? _selectedStatus = null;
 
-  File? _image;
+  final List<File> _images = [];
   final ImagePicker _picker = ImagePicker();
 
   final List<String> _statusChoices = [
@@ -45,6 +45,10 @@ class _CreateAssetState extends State<CreateAssetScreen> {
         _nameController.clear();
         _categoryController.clear();
         _userController.clear();
+        setState(() {
+          _images.clear();
+          _selectedStatus = null;
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -67,7 +71,7 @@ class _CreateAssetState extends State<CreateAssetScreen> {
     );
     if (pickedFile != null) {
       setState(() {
-        _image = File(pickedFile.path);
+        _images.add(File(pickedFile.path));
       });
     }
   }
@@ -348,60 +352,58 @@ class _CreateAssetState extends State<CreateAssetScreen> {
                   ),
                   textAlign: TextAlign.left,
                 ),
-                // deve ser um botao com borda pontilhada Color(0xFFd1d5db),
-                // quando tiver uma imagem deve mudar de tamaho para se ajustar a imagem
-                // deve ser possivel adicionar mais de uma image
-                // botao para adicionar mais uma image abaixo,
+
                 const SizedBox(height: 8),
-                GestureDetector(
-                  onTap: _pickImage,
-                  child: Container(
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: Colors.transparent,
-                      borderRadius: BorderRadius.circular(8),
-                      border: _image == null
-                          ? Border.all(
-                              color: const Color(0xffdbdfe6),
-                              width: 1.5,
-                              style: BorderStyle.none,
-                            )
-                          : null,
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: _image != null
-                          ? Image.file(
-                              _image!,
-                              width: double.infinity,
-                              height: double.infinity,
-                              fit: BoxFit.cover,
-                            )
-                          : CustomPaint(
-                              painter: DashedBorderPainter(),
-                              child: Center(
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.add_a_photo_outlined,
-                                      size: 24,
-                                      color: const Color(0xff60708a),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'Adicionar Imagem',
-                                      style: TextStyle(
-                                        color: const Color(0xff60708a),
-                                        fontSize: 20,
-                                      ),
-                                    ),
-                                  ],
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ..._images.map((image) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.file(
+                            image,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      );
+                    }),
+
+                    GestureDetector(
+                      onTap: _pickImage,
+                      child: Container(
+                        height: 50,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: CustomPaint(
+                          painter: DashedBorderPainter(),
+                          child: Center(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.add_a_photo_outlined,
+                                  size: 24,
+                                  color: const Color(0xff60708a),
                                 ),
-                              ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Adicionar Imagem',
+                                  style: TextStyle(
+                                    color: const Color(0xff60708a),
+                                    fontSize: 20,
+                                  ),
+                                ),
+                              ],
                             ),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
 
                 const SizedBox(height: 24),
@@ -437,7 +439,7 @@ class DashedBorderPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = const Color(0xFFd1d5db)
-      ..strokeWidth = 3
+      ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
 
     const dashWidth = 9.0;
@@ -445,7 +447,6 @@ class DashedBorderPainter extends CustomPainter {
     double startX = 0;
     double startY = 0;
 
-    // Desenha borda tracejada
     while (startX < size.width) {
       canvas.drawLine(Offset(startX, 0), Offset(startX + dashWidth, 0), paint);
       startX += dashWidth + dashSpace;
