@@ -34,6 +34,12 @@ class _CreateAssetState extends State<CreateAssetScreen> {
   List<String> _statusChoices = [];
   bool _statusLoading = true;
   String? _statusChoicesError;
+  final Map<String, String> _statusTranslations = {
+    'available': 'Disponível',
+    'broken': 'Quebrado',
+    'maintenance': 'Manutenção',
+    'inuse': 'Em Uso',
+  };
 
   List<User> _users = [];
   bool _usersLoading = true;
@@ -135,19 +141,7 @@ class _CreateAssetState extends State<CreateAssetScreen> {
       final statusChoices = await ApiService.getStatusChoices();
 
       setState(() {
-        _statusChoices = statusChoices.map((stutus) {
-          if (stutus == 'Available') {
-            return 'Disponivel';
-          } else if (stutus == 'Broken') {
-            return 'Quebrado';
-          } else if (stutus == 'Maintenance') {
-            return 'Manutencao';
-          } else if (stutus == 'InUse') {
-            return 'Em Uso';
-          } else {
-            return stutus as String;
-          }
-        }).toList();
+        _statusChoices = statusChoices.cast<String>();
       });
     } catch (e) {
       setState(() {
@@ -420,7 +414,7 @@ class _CreateAssetState extends State<CreateAssetScreen> {
                         items: _statusChoices.map((status) {
                           return DropdownMenuItem(
                             value: status,
-                            child: Text(status),
+                            child: Text(_statusTranslations[status] ?? status),
                           );
                         }).toList(),
 

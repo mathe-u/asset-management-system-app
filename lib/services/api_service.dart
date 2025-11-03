@@ -266,7 +266,7 @@ class ApiService {
         final data = json.decode(utf8.decode(response.bodyBytes));
         final statusChoices = data['status_choices'];
 
-        return statusChoices.map((json) => json['label'] as String).toList();
+        return statusChoices.map((json) => json['value'] as String).toList();
       } else {
         throw Exception('${response.statusCode}');
       }
