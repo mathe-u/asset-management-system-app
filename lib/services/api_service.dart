@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'dart:typed_data';
+
 import 'package:http/http.dart' as http;
 import '../models/asset.dart';
 import '../models/user.dart';
+import '../models/asset_image.dart';
 
 class ApiService {
   static String _baseUrl = 'http://192.168.0.112:8000/api';
@@ -159,6 +161,59 @@ class ApiService {
       }
     } catch (e) {
       throw Exception('Error fetching asset: $e');
+    }
+  }
+
+  static Future<Asset> createAsset(
+    Asset assetData,
+    List<String> imageFilePaths,
+  ) async {
+    try {
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$_baseUrl/assets/'),
+        // headers: {'Content-Type': 'multipart/form-data', 'Authorization': 'Token $_token',},
+        // body: json.encode(asset.toJson()),
+      );
+
+      request.headers.addAll({'Authorization': 'Token $_token'});
+
+      request.fields['name'] = assetData.name;
+      request.fields['category'] = assetData.category;
+      request.fields['status'] = assetData.status;
+      request.fields['custodian'] = assetData.custodian;
+      request.fields['location'] = assetData.location;
+
+      for (var path in imageFilePaths) {
+        request.files.add(await http.MultipartFile.fromPath('images', path));
+      }
+
+      final streamedResponse = await request.send();
+
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 201) {
+        final data = json.decode(response.body);
+
+        final List<AssetImage> newImages = (data['images'] as List)
+            .map((url) => AssetImage(id: data['id'], url: url as String))
+            .toList();
+        return Asset(
+          name: assetData.name,
+          category: assetData.category,
+          status: assetData.status,
+          custodian: assetData.custodian,
+          location: assetData.location,
+          code: data['code'],
+          barcode: data['barcode'],
+          images: newImages,
+        );
+      } else {
+        final errorData = json.decode(response.body);
+        throw Exception(errorData['message']);
+      }
+    } catch (e) {
+      throw Exception('Error creating asset: $e');
     }
   }
 

@@ -35,17 +35,6 @@ class Asset {
   factory Asset.fromJson(Map<String, dynamic> json) {
     final List<dynamic> imageList = json['images'];
 
-    // if (imageList.isNotEmpty) {
-    //   for (var img in imageList) {
-    //     if (img['url'].isNotEmpty) {
-    //       print(AssetImage.fromJson(img).url);
-    //     } else {
-    //       print(img['url']);
-    //     }
-    //   }
-    // } else {
-    //   print('[]');
-    // }
     final List<AssetImage> assetImages = imageList.isNotEmpty
         ? imageList
               .map<AssetImage>((item) => AssetImage.fromJson(item))
