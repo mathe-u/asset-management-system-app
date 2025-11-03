@@ -187,4 +187,25 @@ class ApiService {
       throw Exception('Failed to download image: $url');
     }
   }
+
+  static Future<List<dynamic>> getCategories() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/categories/'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(utf8.decode(response.bodyBytes));
+        final List<dynamic> categories = data['categories'];
+        return categories.map((json) => json['name']).toList();
+      } else if (response.statusCode == 401) {
+        throw Exception('No credentials');
+      } else {
+        throw Exception('Erro');
+      }
+    } catch (e) {
+      throw Exception('Error fetching categories: ${e.toString()}');
+    }
+  }
 }
