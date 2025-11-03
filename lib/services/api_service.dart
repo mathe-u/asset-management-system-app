@@ -79,6 +79,27 @@ class ApiService {
     }
   }
 
+  static Future<List<User>> getUsers() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/users/'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(utf8.decode(response.bodyBytes));
+
+        return (data as List<dynamic>)
+            .map((json) => User.fromJson(json as Map<String, dynamic>))
+            .toList();
+      } else {
+        throw Exception('Error fetching user: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching user: ${e.toString()}');
+    }
+  }
+
   static Future<User> getUserById(int? userId) async {
     try {
       if (_token == '') {
@@ -202,10 +223,29 @@ class ApiService {
       } else if (response.statusCode == 401) {
         throw Exception('No credentials');
       } else {
-        throw Exception('Erro');
+        throw Exception('Unexpected error');
       }
     } catch (e) {
       throw Exception('Error fetching categories: ${e.toString()}');
+    }
+  }
+
+  static Future<List<String>> getLocations() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/locations/'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(utf8.decode(response.bodyBytes));
+        final List<dynamic> locations = data['locations'];
+        return locations.map((json) => json['name'] as String).toList();
+      } else {
+        throw Exception('Unexpected error');
+      }
+    } catch (e) {
+      throw Exception('Error fetching locations: ${e.toString()}');
     }
   }
 }
