@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/asset.dart';
 import '../services/api_service.dart';
+import '../screens/main_screen.dart';
 
 class AssetDetailScreen extends StatefulWidget {
   final Asset asset;
@@ -39,11 +40,17 @@ class _AsserDetailScreenState extends State<AssetDetailScreen> {
     if (confirm == true && context.mounted) {
       try {
         await ApiService.deleteAsset(widget.asset.code);
-        if (context.mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Asset excluído com sucesso')));
-        }
+
+        if (!context.mounted) return;
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Asset excluído com sucesso')));
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => MainScreen()),
+        );
       } catch (e) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showMaterialBanner(
