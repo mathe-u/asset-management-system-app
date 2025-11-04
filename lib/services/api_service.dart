@@ -172,8 +172,6 @@ class ApiService {
       var request = http.MultipartRequest(
         'POST',
         Uri.parse('$_baseUrl/assets/'),
-        // headers: {'Content-Type': 'multipart/form-data', 'Authorization': 'Token $_token',},
-        // body: json.encode(asset.toJson()),
       );
 
       request.headers.addAll({'Authorization': 'Token $_token'});
@@ -196,7 +194,7 @@ class ApiService {
         final data = json.decode(response.body);
 
         final List<AssetImage> newImages = (data['images'] as List)
-            .map((url) => AssetImage(id: data['id'], url: url as String))
+            .map((url) => AssetImage(id: null, url: url as String))
             .toList();
         return Asset(
           name: assetData.name,
@@ -213,6 +211,9 @@ class ApiService {
         throw Exception(errorData['message']);
       }
     } catch (e) {
+      // print('/////////////////////////////');
+      // print(e);
+      // print('/////////////////////////////');
       throw Exception('Error creating asset: $e');
     }
   }
