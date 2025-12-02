@@ -7,8 +7,10 @@ import './screens/main_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final token = await StorageService.getToken();
-  if (token != null && token.isNotEmpty) {
+  final url = await StorageService.getUrl();
+  if (token != null && token.isNotEmpty && url != null && url.isNotEmpty) {
     ApiService.setToken(token);
+    ApiService.setBaseUrl(url);
     runApp(const AssetApp(startOnMain: true));
   } else {
     runApp(const AssetApp(startOnMain: false));

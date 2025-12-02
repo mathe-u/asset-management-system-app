@@ -14,6 +14,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController _apiUrl = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
@@ -21,16 +22,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
+    _apiUrl.dispose();
     _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
   void _handleLogin() async {
+    final url = _apiUrl.text.trim();
     final username = _usernameController.text.trim();
     final password = _passwordController.text.trim();
 
-    if (username.isEmpty || password.isEmpty) {
+    if (url.isEmpty || username.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Por favor, preencha todos campos')),
       );
@@ -40,6 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
+      ApiService.setBaseUrl(url);
       ApiService.setCredentials(username, password);
 
       final Map<String, dynamic> authData = await ApiService.login();
@@ -51,6 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ApiService.setToken(token);
         await StorageService.saveToken(token);
         await StorageService.saveUserId(userId);
+        await StorageService.saveUrl(url);
 
         if (mounted) {
           Navigator.of(context).pushReplacement(
@@ -110,6 +115,25 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
             const SizedBox(height: 40),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Server',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: labelColor,
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+            TextField(
+              controller: _apiUrl,
+              decoration: const InputDecoration(
+                labelText: 'URL Server',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
             Align(
               alignment: Alignment.centerLeft,
               child: Text(

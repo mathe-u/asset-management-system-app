@@ -7,7 +7,7 @@ import '../models/user.dart';
 import '../models/asset_image.dart';
 
 class ApiService {
-  static String _baseUrl = 'http://192.168.0.112:8000/api';
+  static String _baseUrl = '';
   static String _token = '';
   static String _username = '';
   static String _password = '';

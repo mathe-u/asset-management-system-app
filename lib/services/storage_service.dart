@@ -1,8 +1,19 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 class StorageService {
+  static const String _urlKey = 'base_url';
   static const String _tokenKey = 'api_token';
   static const String _userKey = 'user_id';
+
+  static Future<void> saveUrl(String url) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_urlKey, url);
+  }
+
+  static Future<String?> getUrl() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_urlKey);
+  }
 
   static Future<void> saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
