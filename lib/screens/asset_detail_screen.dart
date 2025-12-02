@@ -94,7 +94,10 @@ class _AsserDetailScreenState extends State<AssetDetailScreen> {
     // 'https://lh3.googleusercontent.com/aida-public/AB6AXuAExuLLxNWza7jmqEKG8j4dA4PNYD5BnQ3lwHZh3YaMZN1TGqR8SpfIyP61MpIVX3irpJAsFyFxdGWws_LoUSFOh2_BRo_9u3WbEaCbxHkHqSDU8fRc3YqUnnYqLEvI-bfP-Zgy9h2g3S5X_7Z1WXHKmHIU4SW10dAYdEQ_T1K6uYt-wWsbUTF6YkgJHO2PQ8SNRTVHSyuReTOcgpm_WpqyyGZpOpt4pnKSpTBiZ1YmmgyNghRK-5fmhnL9_zRg1oMAFPx6VNdoum0',
     // ];
     final List<String> assetImages = asset.images
-        .map((img) => 'http://192.168.0.112:8000${img.url}')
+        .map(
+          (img) =>
+              '${ApiService.getBaseUrl().replaceFirst(RegExp(r'/api$'), '')}${img.url}',
+        )
         .toList();
 
     return Scaffold(

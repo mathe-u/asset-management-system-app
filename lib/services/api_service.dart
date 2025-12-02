@@ -20,6 +20,10 @@ class ApiService {
     }
   }
 
+  static String getBaseUrl() {
+    return _baseUrl;
+  }
+
   static void setToken(String token) {
     _token = token;
   }
