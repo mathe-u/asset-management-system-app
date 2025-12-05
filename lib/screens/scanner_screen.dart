@@ -22,23 +22,30 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
   void _onDetect(BarcodeCapture capture) async {
     final List<Barcode> barcodes = capture.barcodes;
+
+    if (_isLoading) return;
+
     for (final Barcode barcode in barcodes) {
       final code = barcode.rawValue;
+
       if (code != null && code != _scannedValue) {
         setState(() {
           _scannedValue = code;
           _isLoading = true;
         });
 
+        await cameraController.stop();
+
         try {
           final Asset asset = await ApiService.getAssetByCode(code);
+
           if (mounted) {
-            Navigator.of(context).push(
+            await Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (context) => AssetDetailScreen(asset: asset),
               ),
             );
-            cameraController.stop();
+            // cameraController.stop();
           }
         } catch (e) {
           if (mounted) {
@@ -48,11 +55,14 @@ class _ScannerScreenState extends State<ScannerScreen> {
           }
         } finally {
           if (mounted) {
+            await Future.delayed(const Duration(microseconds: 200));
+            await cameraController.start();
             setState(() {
               _isLoading = false;
             });
           }
         }
+        break;
       }
     }
   }
@@ -103,6 +113,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
               ],
             ),
           ),
+
           Expanded(
             flex: 1,
             child: Container(
@@ -120,25 +131,25 @@ class _ScannerScreenState extends State<ScannerScreen> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: () async {
-                      await cameraController.start();
-                      setState(() {
-                        _scannedValue = null;
-                        _isLoading = false;
-                      });
-                    },
-                    style: ButtonStyle(
-                      backgroundColor: WidgetStatePropertyAll(
-                        const Color(0xFFF3F4F6),
-                      ),
-                    ),
+                  // ElevatedButton(
+                  //   onPressed: () async {
+                  //     await cameraController.start();
+                  //     setState(() {
+                  //       _scannedValue = null;
+                  //       _isLoading = false;
+                  //     });
+                  //   },
+                  //   style: ButtonStyle(
+                  //     backgroundColor: WidgetStatePropertyAll(
+                  //       const Color(0xFFF3F4F6),
+                  //     ),
+                  //   ),
 
-                    child: const Text(
-                      'Reiniciar Scanner',
-                      style: TextStyle(color: Colors.black),
-                    ),
-                  ),
+                  //   child: const Text(
+                  //     'Reiniciar Scanner',
+                  //     style: TextStyle(color: Colors.black),
+                  //   ),
+                  // ),
                 ],
               ),
             ),
