@@ -290,6 +290,7 @@ class ApiService {
   }
 
   static Future<List<dynamic>> getCategories() async {
+    await Future.delayed(const Duration(seconds: 5));
     try {
       final response = await http.get(
         Uri.parse('$_baseUrl/categories/'),
@@ -308,6 +309,13 @@ class ApiService {
     } catch (e) {
       throw Exception('Error fetching categories: ${e.toString()}');
     }
+  }
+
+  static Future<void> updateAsset(
+    String code,
+    Map<String, dynamic> data,
+  ) async {
+    await Future.delayed(const Duration(seconds: 5));
   }
 
   static Future<List<String>> getLocations() async {

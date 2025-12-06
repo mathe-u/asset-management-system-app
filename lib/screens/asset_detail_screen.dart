@@ -18,6 +18,56 @@ class _AsserDetailScreenState extends State<AssetDetailScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
+  bool _isEditing = false;
+  bool _isSaving = false;
+
+  List<String> _statusChoices = [];
+  bool _statusLoading = false;
+  String? _statusError;
+  String? _selectedStatus;
+  late String _displayStatusChoices;
+  late String _currentAssetStatus;
+
+  List<String> _custodians = [];
+  bool _custodianLoding = false;
+  String? _custodianError;
+  String? _selectedCustodian;
+  late String _displayCustodian;
+
+  List<String> _categories = [];
+  bool _categoriesLoading = false;
+  String? _categoriesError;
+  String? _selectedCategory;
+  late String _displayCategory;
+
+  List<String> _locations = [];
+  bool _locationsLoading = false;
+  String? _locationsError;
+  String? _selectedLocation;
+  late String _displayLocation;
+
+  final Map<String, String> _statusTranslations = {
+    'available': 'Disponível',
+    'broken': 'Quebrado',
+    'maintenance': 'Manutenção',
+    'inuse': 'Em Uso',
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _currentAssetStatus = widget.asset.status;
+    _displayStatusChoices =
+        _statusTranslations[widget.asset.status] ?? widget.asset.status;
+    _displayCustodian = widget.asset.custodian;
+    _displayCategory = widget.asset.category;
+    _displayLocation = widget.asset.location;
+    _loadStatus();
+    _loadCustodian();
+    _loadCategories();
+    _loadLocations();
+  }
+
   void _deletAsset(BuildContext context) async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -61,23 +111,203 @@ class _AsserDetailScreenState extends State<AssetDetailScreen> {
     }
   }
 
-  Widget _buildDetailRow(String label, String value) {
+  Future<void> _loadStatus() async {
+    setState(() {
+      _statusLoading = true;
+      _statusError = null;
+    });
+    try {
+      final status = await ApiService.getStatusChoices();
+      if (mounted) {
+        setState(() {
+          _statusChoices = status.cast<String>();
+          _statusLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _statusError = 'Erro';
+          _statusLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadCustodian() async {
+    setState(() {
+      _custodianLoding = true;
+      _custodianError = null;
+    });
+    try {
+      final users = await ApiService.getUsers();
+      if (mounted) {
+        setState(() {
+          _custodians = users.map((user) {
+            return user.username;
+          }).toList();
+          _custodianLoding = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _categoriesError = "Erro categories";
+          _categoriesLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadCategories() async {
+    setState(() {
+      _categoriesLoading = true;
+      _categoriesError = null;
+    });
+    try {
+      final categories = await ApiService.getCategories();
+      if (mounted) {
+        setState(() {
+          _categories = categories.cast<String>();
+          _categoriesLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _categoriesError = "Erro categories";
+          _categoriesLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadLocations() async {
+    setState(() {
+      _locationsLoading = true;
+      _locationsError = null;
+    });
+
+    try {
+      final locations = await ApiService.getLocations();
+      if (mounted) {
+        setState(() {
+          _locations = locations.cast<String>();
+          _locationsLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _locationsError = "Erro categories";
+          _locationsLoading = false;
+        });
+      }
+    }
+  }
+
+  void _toggleEdit() {
+    setState(() {
+      if (!_isEditing) {
+        _selectedStatus = _currentAssetStatus;
+        _selectedCustodian = _displayCustodian;
+        _selectedCategory = _displayCategory;
+        _selectedLocation = _displayLocation;
+        if (_categories.isEmpty && _categoriesError != null ||
+            _statusChoices.isEmpty && _statusError != null) {
+          _loadStatus();
+          _loadCustodian();
+          _loadCategories();
+          _loadLocations();
+        }
+      }
+      _isEditing = !_isEditing;
+    });
+  }
+
+  Future<void> _save() async {
+    if (_selectedCategory == null || _selectedCategory == _displayCategory) {
+      _toggleEdit();
+      return;
+    }
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      await ApiService.updateAsset(widget.asset.code, {
+        'status': _selectedStatus,
+        'custodian': _selectedCustodian,
+        'category': _selectedCategory,
+        'location': _selectedLocation,
+      });
+
+      if (!mounted) return;
+
+      setState(() {
+        _currentAssetStatus = _selectedStatus!;
+        _displayStatusChoices =
+            _statusTranslations[_selectedStatus!] ?? _selectedStatus!;
+        _displayCustodian = _selectedCustodian!;
+        _displayCategory = _selectedCategory!;
+        _displayLocation = _selectedLocation!;
+        _isEditing = false;
+        _isSaving = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Categoria atualizada'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error on updating: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Widget _buildDetailRow(String label, String value, {Widget? customContent}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
             label,
-            style: GoogleFonts.inter(fontWeight: FontWeight.w500, fontSize: 18),
-          ),
-          SizedBox(height: 2),
-          Text(
-            value,
             style: GoogleFonts.inter(
-              color: Colors.grey[600],
               fontWeight: FontWeight.w500,
               fontSize: 18,
+              // color: Colors.blueAccent,
+            ),
+          ),
+
+          // const SizedBox(height: 2),
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child:
+                  customContent ??
+                  Text(
+                    value,
+                    textAlign: TextAlign.end,
+                    style: GoogleFonts.inter(
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                      fontSize: 18,
+                    ),
+                  ),
             ),
           ),
         ],
@@ -85,14 +315,85 @@ class _AsserDetailScreenState extends State<AssetDetailScreen> {
     );
   }
 
+  Widget _buildCustomDropdown(
+    List<String> items,
+    String? selectedItem,
+    bool isLoading,
+    String? error,
+    ValueChanged<String?> onChanged, // Adicionado parâmetro de callback
+  ) {
+    if (isLoading) {
+      return const SizedBox(
+        height: 24,
+        width: 24,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          color: Color(0xFFFF7043),
+        ),
+      );
+    }
+
+    if (error != null) {
+      return Text(
+        'Erro',
+        style: TextStyle(color: Colors.red[300], fontSize: 14),
+      );
+    }
+
+    return DropdownButtonFormField<String>(
+      initialValue: items.contains(selectedItem) ? selectedItem : null,
+      isExpanded: true,
+      icon: const Icon(Icons.arrow_drop_down, color: Colors.grey, size: 18),
+      decoration: const InputDecoration(
+        isDense: true,
+        contentPadding: EdgeInsets.zero,
+        border: OutlineInputBorder(borderSide: BorderSide.none),
+      ),
+      alignment: AlignmentDirectional.centerEnd,
+
+      // Lista de opções (Aberta)
+      items: items.map((itemKey) {
+        return DropdownMenuItem(
+          value: itemKey, // O valor interno é a chave (ex: 'available')
+          child: Text(
+            _statusTranslations[itemKey] ?? itemKey, // O texto é traduzido
+            textAlign: TextAlign.right,
+            style: GoogleFonts.inter(
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w500,
+              fontSize: 18,
+            ),
+          ),
+        );
+      }).toList(),
+
+      // O que aparece quando o item é SELECIONADO (Fechado)
+      selectedItemBuilder: (BuildContext context) {
+        return items.map<Widget>((String itemKey) {
+          return Container(
+            alignment: Alignment.centerRight,
+            child: Text(
+              _statusTranslations[itemKey] ??
+                  itemKey, // <--- TRADUÇÃO AQUI TAMBÉM
+              textAlign: TextAlign.right,
+              style: GoogleFonts.inter(
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
+                fontSize: 18,
+              ),
+            ),
+          );
+        }).toList();
+      },
+
+      // Callback para atualizar o estado na tela principal
+      onChanged: onChanged,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final Asset asset = widget.asset;
-    // final List<String> assetImages = [
-    // 'https://lh3.googleusercontent.com/aida-public/',
-    // 'https://lh3.googleusercontent.com/aida-public/AB6AXuAExuLLxNWza7jmqEKG8j4dA4PNYD5BnQ3lwHZh3YaMZN1TGqR8SpfIyP61MpIVX3irpJAsFyFxdGWws_LoUSFOh2_BRo_9u3WbEaCbxHkHqSDU8fRc3YqUnnYqLEvI-bfP-Zgy9h2g3S5X_7Z1WXHKmHIU4SW10dAYdEQ_T1K6uYt-wWsbUTF6YkgJHO2PQ8SNRTVHSyuReTOcgpm_WpqyyGZpOpt4pnKSpTBiZ1YmmgyNghRK-5fmhnL9_zRg1oMAFPx6VNdoum0',
-    // 'https://lh3.googleusercontent.com/aida-public/AB6AXuAExuLLxNWza7jmqEKG8j4dA4PNYD5BnQ3lwHZh3YaMZN1TGqR8SpfIyP61MpIVX3irpJAsFyFxdGWws_LoUSFOh2_BRo_9u3WbEaCbxHkHqSDU8fRc3YqUnnYqLEvI-bfP-Zgy9h2g3S5X_7Z1WXHKmHIU4SW10dAYdEQ_T1K6uYt-wWsbUTF6YkgJHO2PQ8SNRTVHSyuReTOcgpm_WpqyyGZpOpt4pnKSpTBiZ1YmmgyNghRK-5fmhnL9_zRg1oMAFPx6VNdoum0',
-    // ];
     final List<String> assetImages = asset.images
         .map(
           (img) =>
@@ -103,14 +404,39 @@ class _AsserDetailScreenState extends State<AssetDetailScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Detalhes do Ativo'),
+        backgroundColor: const Color(0xfff8f9fa),
         centerTitle: true,
-        actions: [
-          IconButton(onPressed: () {}, icon: const Icon(Icons.edit)),
-          IconButton(
-            onPressed: () => _deletAsset(context),
-            icon: Icon(Icons.delete),
-          ),
-        ],
+        actions: _isEditing
+            ? [
+                IconButton(
+                  onPressed: _toggleEdit,
+                  icon: const Icon(Icons.close, color: Colors.red),
+                  tooltip: 'Cancelar',
+                ),
+                IconButton(
+                  onPressed: _isSaving ? null : _save,
+                  icon: _isSaving
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.check, color: Colors.green),
+                  tooltip: 'Salvar',
+                ),
+              ]
+            : [
+                IconButton(
+                  onPressed: _toggleEdit,
+                  icon: const Icon(Icons.edit),
+                  tooltip: 'Editar',
+                ),
+                IconButton(
+                  onPressed: () => _deletAsset(context),
+                  icon: Icon(Icons.delete),
+                  tooltip: 'Deletar',
+                ),
+              ],
       ),
       backgroundColor: const Color(0xfff8f9fa),
       body: SingleChildScrollView(
@@ -231,10 +557,77 @@ class _AsserDetailScreenState extends State<AssetDetailScreen> {
                           fontWeight: FontWeight.w400,
                         ),
                       ),
-                      _buildDetailRow('Status', asset.status),
-                      _buildDetailRow('Responsavel', asset.custodian),
-                      _buildDetailRow('Categoria', asset.category),
-                      _buildDetailRow('Local', asset.location),
+                      _buildDetailRow(
+                        'Status',
+                        _displayStatusChoices,
+                        customContent: _isEditing
+                            ? _buildCustomDropdown(
+                                _statusChoices,
+                                _selectedStatus,
+                                _statusLoading,
+                                _statusError,
+                                (value) {
+                                  setState(() {
+                                    _selectedStatus = value;
+                                  });
+                                },
+                              )
+                            : null,
+                      ),
+
+                      _buildDetailRow(
+                        'Responsavel',
+                        _displayCustodian,
+                        customContent: _isEditing
+                            ? _buildCustomDropdown(
+                                _custodians,
+                                _selectedCustodian,
+                                _custodianLoding,
+                                _custodianError,
+                                (value) {
+                                  setState(() {
+                                    _selectedCustodian = value;
+                                  });
+                                },
+                              )
+                            : null,
+                      ),
+
+                      _buildDetailRow(
+                        'Categoria',
+                        _displayCategory,
+                        customContent: _isEditing
+                            ? _buildCustomDropdown(
+                                _categories,
+                                _selectedCategory,
+                                _categoriesLoading,
+                                _categoriesError,
+                                (value) {
+                                  setState(() {
+                                    _selectedCategory = value;
+                                  });
+                                },
+                              )
+                            : null,
+                      ),
+
+                      _buildDetailRow(
+                        'Local',
+                        _displayLocation,
+                        customContent: _isEditing
+                            ? _buildCustomDropdown(
+                                _locations,
+                                _selectedLocation,
+                                _locationsLoading,
+                                _locationsError,
+                                (value) {
+                                  setState(() {
+                                    _selectedLocation = value;
+                                  });
+                                },
+                              )
+                            : null,
+                      ),
                     ],
                   ),
                 ),
